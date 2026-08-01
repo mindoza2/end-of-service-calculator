@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>حاسبة نهاية الخدمة</title>
+
+<style>
+  :root {
+    --ink: #141917;
+    --ink-soft: #66695c;
+    --line: #e2ddd2;
+    --surface: #fffdf9;
+    --bg: #f2eee4;
+    --primary: #43453c;
+    --primary-dark: #141917;
+    --primary-soft: #e8e7e1;
+    --gold: #ddd0bc;
+    --gold-soft: #f2ece0;
+    --danger: #a8432b;
+    --danger-soft: #f7e9e3;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(20,25,23,0.06), 0 8px 24px rgba(20,25,23,0.07);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans Arabic', 'Cairo', sans-serif;
+    background: var(--bg);
+    margin: 0;
+    padding: 0;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ================= HEADER ================= */
+  header {
+    position: relative;
+    overflow: hidden;
+    padding: 46px 20px 42px;
+    text-align: center;
+    background:
+      radial-gradient(120% 140% at 50% 15%, rgba(255,255,255,0.05), transparent 60%),
+      radial-gradient(140% 100% at 50% 100%, rgba(0,0,0,0.35), transparent 65%),
+      #2d312c;
+  }
+  header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  header::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold), #e0c377, var(--gold));
+  }
+  header h1 {
+    position: relative;
+    margin: 0;
+    font-size: clamp(24px, 4.2vw, 32px);
+    font-weight: 700;
+    color: #ece3d2;
+    letter-spacing: 0.3px;
+    text-shadow:
+      0 1.5px 0 rgba(0,0,0,0.55),
+      0 -1px 0 rgba(255,255,255,0.12),
+      0 2px 4px rgba(0,0,0,0.3);
+  }
+  .lang-switch {
+    position: absolute;
+    top: 20px;
+    inset-inline-end: 20px;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.35);
+    transition: background 0.2s ease;
+    z-index: 2;
+  }
+  .lang-switch:hover { background: rgba(255,255,255,0.22); }
+
+  .rights {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 34px auto 40px;
+    max-width: 300px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+  .linkedin-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    background: var(--primary-soft);
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .linkedin-link:hover { background: var(--primary); color: #fff; }
+
+  /* ================= APP SHELL ================= */
+  .app-shell {
+    max-width: 1180px;
+    margin: -34px auto 0;
+    padding: 0 20px 20px;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 22px;
+    align-items: start;
+    position: relative;
+    z-index: 3;
+  }
+  @media (max-width: 880px) {
+    .app-shell { grid-template-columns: 1fr; margin-top: -20px; }
+  }
+
+  /* ================= RESULT PANEL ================= */
+  .result-panel {
+    position: sticky;
+    top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgba(15,61,51,0.06), 0 20px 40px rgba(15,61,51,0.12);
+    overflow: hidden;
+  }
+  @media (max-width: 880px) { .result-panel { position: static; } }
+
+  .result-empty {
+    padding: 46px 26px;
+    text-align: center;
+    color: var(--ink-soft);
+  }
+  .result-empty svg { opacity: 0.32; margin-bottom: 14px; }
+  .result-empty p { margin: 0; font-size: 13px; line-height: 1.8; }
+
+  .result-hero {
+    position: relative;
+    padding: 26px 24px 24px;
+    background: linear-gradient(160deg, var(--primary) 0%, var(--primary-dark) 100%);
+  }
+  .result-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), #e0c377, var(--gold));
+  }
+  .result-hero .eyebrow {
+    display: block;
+    color: rgba(255,255,255,0.65);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .hero-total-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .hero-total-row b {
+    color: var(--gold-soft);
+    font-size: 33px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .hero-total-row span {
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .result-body { padding: 18px 22px 22px; }
+
+  .result-breakdown { list-style: none; margin: 0; padding: 0; }
+  .result-breakdown li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+  }
+  .result-breakdown li:last-child { border-bottom: none; }
+  .result-breakdown li span { color: var(--ink-soft); font-weight: 500; }
+  .result-breakdown li b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .result-breakdown li b.warn { color: var(--danger); font-size: 12px; font-weight: 600; }
+
+  .result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+  .meta-chip {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    font-weight: 500;
+  }
+  .meta-chip b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* ================= MAIN COLUMN ================= */
+  .main-col { min-width: 0; }
+
+  .form-section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 30px 28px;
+  }
+
+  .field-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0 20px;
+  }
+  .field-group + .group-heading { margin-top: 26px; }
+
+  .group-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 4px 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .group-heading:first-child { margin-top: 0; }
+  .step-badge {
+    width: 23px;
+    height: 23px;
+    border-radius: 7px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  label {
+    display: block;
+    margin-top: 16px;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--ink);
+  }
+  input, select {
+    width: 100%;
+    padding: 11px 14px;
+    margin-top: 6px;
+    border: 1px solid var(--line);
+    background: #fbfbfa;
+    border-radius: 10px;
+    font-size: 14.5px;
+    font-family: inherit;
+    color: var(--ink);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-inline-end: 34px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235b6660' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 12px center;
+    cursor: pointer;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+    background: #fff;
+  }
+  input::placeholder { color: #9aa39d; }
+
+  .date-row { display: flex; gap: 10px; }
+
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+
+  button {
+    border: none;
+    padding: 13px 26px;
+    border-radius: 11px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    transition: transform 0.05s ease, background 0.15s ease, box-shadow 0.15s ease;
+  }
+  button:active { transform: translateY(1px); }
+
+  #calc_btn {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(15,61,51,0.25);
+  }
+  #calc_btn:hover { background: var(--primary-dark); }
+
+  #print_btn {
+    background: #fff;
+    color: var(--primary);
+    border: 1.5px solid var(--primary);
+  }
+  #print_btn:hover { background: var(--primary-soft); }
+
+  #error_box {
+    display: none;
+    background: var(--danger-soft);
+    border: 1px solid #e3b3a5;
+    color: var(--danger);
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin: 0 0 18px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  #report_box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    max-width: 960px;
+    margin: 20px auto;
+    padding: 30px 30px 26px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  /* ---- Report letterhead ---- */
+  .report-letterhead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    border-bottom: 2px solid var(--gold-soft);
+  }
+  .report-title-block {
+    border-inline-start: 3px solid var(--gold);
+    padding-inline-start: 14px;
+  }
+  .report-letterhead h2 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 0.2px;
+  }
+  .report-sub {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  .report-meta {
+    text-align: end;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .report-meta strong { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ---- Calculation basis grid ---- */
+  .report-intro {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px 24px;
+    margin-bottom: 26px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .intro-item span {
+    display: block;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .intro-item b {
+    display: block;
+    font-size: 14.5px;
+    color: var(--ink);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- Section titles ---- */
+  /* ---- Tables ---- */
+  #report_box table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  #report_box th, #report_box td {
+    border-bottom: 1px solid var(--line);
+    padding: 11px 8px;
+    font-size: 14px;
+    text-align: start;
+  }
+  #report_box th { color: var(--ink-soft); font-weight: 600; width: 60%; }
+  #report_box td { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; text-align: start; }
+  .row-note {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--ink-soft);
+    margin-top: 3px;
+  }
+
+  #report_box tr.ledger-head td {
+    background: var(--bg);
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  #report_box tr.ledger-subtotal th, #report_box tr.ledger-subtotal td {
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    font-size: 15px;
+    font-weight: 700;
+    border-bottom: none;
+    border-top: 1.5px solid var(--primary);
+  }
+
+  /* ---- Final net box ---- */
+  .report-net-box {
+    margin-top: 26px;
+    padding: 22px 26px;
+    border-radius: 14px;
+    background: linear-gradient(150deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    box-shadow: 0 10px 28px rgba(15,61,51,0.28);
+  }
+  .report-net-box span {
+    color: rgba(255,255,255,0.75);
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  .report-net-box strong {
+    color: var(--gold-soft);
+    font-size: 27px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .report-footer-note {
+    margin: 20px 0 0;
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-align: center;
+    opacity: 0.8;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1 id="title">حاسبة نهاية الخدمة</h1>
+  <div class="lang-switch" onclick="toggleLang()">عربي | English</div>
+</header>
+
+<div class="app-shell">
+
+  <div class="main-col">
+
+    <div id="error_box"></div>
+
+    <section class="form-section">
+
+      <div class="group-heading"><span class="step-badge">01</span><span id="section_employee">بيانات الموظف</span></div>
+      <div class="field-group">
+        <div>
+          <label id="nationality_label">الجنسية:</label>
+          <select id="nationality">
+            <option value="">اختر الجنسية</option>
+            <option value="saudi">سعودي</option>
+            <option value="non_saudi">غير سعودي</option>
+          </select>
+        </div>
+        <div>
+          <label id="insurance_input_label">نسبة خصم التأمينات (%):</label>
+          <select id="insurance_rate_input">
+            <option value="">اختر</option>
+            <option value="9.75">9.75%</option>
+            <option value="10.25">10.25%</option>
+            <option value="10.75">10.75%</option>
+            <option value="11.25">11.25%</option>
+            <option value="11.75">11.75%</option>
+          </select>
+        </div>
+        <div>
+          <label id="salary_input_label">الراتب الشهري:</label>
+          <input type="number" id="salary" min="1">
+        </div>
+      </div>
+
+      <div class="group-heading"><span class="step-badge">02</span><span id="section_duration">مدة الخدمة</span></div>
+      <div class="field-group">
+        <div>
+          <label id="start_label">تاريخ بداية العمل:</label>
+          <div class="date-row">
+            <input type="number" id="start_day" placeholder="اليوم">
+            <input type="number" id="start_month" placeholder="الشهر">
+            <input type="number" id="start_year" placeholder="السنة">
+          </div>
+        </div>
+        <div>
+          <label id="end_label">تاريخ نهاية العمل:</label>
+          <div class="date-row">
+            <input type="number" id="end_day" placeholder="اليوم">
+            <input type="number" id="end_month" placeholder="الشهر">
+            <input type="number" id="end_year" placeholder="السنة">
+          </div>
+        </div>
+      </div>
+
+      <div class="group-heading"><span class="step-badge">03</span><span id="section_termination">نوع الإنهاء والعقد</span></div>
+      <div class="field-group">
+        <div>
+          <label id="party_label">جهة إنهاء العلاقة:</label>
+          <select id="termination_party">
+            <option value="">اختر الجهة</option>
+            <option value="company">من قبل المنشأة</option>
+            <option value="employee">من قبل الموظف</option>
+          </select>
+        </div>
+        <div>
+          <label id="contract_label">نوع عقد العمل:</label>
+          <select id="contract_type">
+            <option value="">اختر نوع العقد</option>
+            <option value="محدد">محدد</option>
+            <option value="غير محدد">غير محدد</option>
+          </select>
+        </div>
+        <div>
+          <label id="reason_label">إنهاء علاقة العمل حسب المادة:</label>
+          <select id="termination_reason">
+            <option value="">اختر المادة</option>
+            <option value="53">المادة 53</option>
+            <option value="57">المادة 57</option>
+            <option value="74">المادة 74</option>
+            <option value="75">المادة 75</option>
+            <option value="77">المادة 77</option>
+            <option value="79">المادة 79</option>
+            <option value="80">المادة 80</option>
+            <option value="81">المادة 81</option>
+            <option value="85">المادة 85</option>
+            <option value="87">المادة 87</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="group-heading" id="section_article77" style="display:none;"><span class="step-badge">77</span><span id="section_article77_text">تعويض المادة 77</span></div>
+      <div class="field-group" id="article77_fields" style="display:none;">
+        <div>
+          <label id="article77_comp_type_label">نوع التعويض عن الإنهاء بدون سبب مشروع:</label>
+          <select id="article77_comp_type">
+            <option value="auto">الصيغة النظامية (تلقائي)</option>
+            <option value="fixed">مبلغ ثابت متفق عليه بالعقد</option>
+          </select>
+        </div>
+        <div id="article77_fixed_wrapper" style="display:none;">
+          <label id="article77_fixed_amount_label">المبلغ المتفق عليه بالعقد:</label>
+          <input type="number" id="article77_fixed_amount" min="1">
+        </div>
+        <div id="original_contract_end_wrapper" style="display:none;">
+          <label id="original_contract_end_label">تاريخ نهاية العقد الأصلي (للعقد محدد المدة):</label>
+          <div class="date-row">
+            <input type="number" id="orig_end_day" placeholder="اليوم">
+            <input type="number" id="orig_end_month" placeholder="الشهر">
+            <input type="number" id="orig_end_year" placeholder="السنة">
+          </div>
+        </div>
+      </div>
+
+      <div class="group-heading"><span class="step-badge">04</span><span id="section_final_month">راتب الشهر الجزئي الأخير</span></div>
+      <div class="field-group">
+        <div>
+          <label id="final_month_paid_label">هل استُلم راتب أيام الشهر الأخير الجزئي بشكل منفصل؟</label>
+          <select id="final_month_paid">
+            <option value="">اختر</option>
+            <option value="no">لا، لم يُستلم</option>
+            <option value="yes">نعم، استُلم مسبقاً</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="group-heading"><span class="step-badge">05</span><span id="section_extras">مستحقات إضافية</span></div>
+      <div class="field-group">
+        <div>
+          <label id="leave_label">رصيد الاجازات بالايام:</label>
+          <input type="number" id="leave_balance" min="0">
+        </div>
+        <div>
+          <label id="late_label">الرواتب المتأخرة (عدد الأشهر):</label>
+          <input type="number" id="late_months" min="0">
+        </div>
+        <div>
+          <label id="notice_label">هل تم إشعار العامل؟</label>
+          <select id="notice_status">
+            <option value="">اختر</option>
+            <option value="yes">نعم</option>
+            <option value="no">لا</option>
+          </select>
+        </div>
+        <div>
+          <label id="notice_days_label">مدة الإشعار (أيام):</label>
+          <input type="number" id="notice_days" min="0">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="calc_btn" onclick="calculate()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+          <span id="calc_btn_text">احسب الآن</span>
+        </button>
+        <button id="print_btn" onclick="printReport()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"></path></svg>
+          <span id="print_btn_text">طباعة التقرير</span>
+        </button>
+      </div>
+
+    </section>
+  </div>
+
+  <aside class="result-panel" id="result_panel">
+    <div class="result-empty" id="result_empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="3" width="16" height="18" rx="2.5"></rect>
+        <path d="M8 7h8M8 11h2M12.5 11h3.5M8 15h2M12.5 15h3.5"></path>
+      </svg>
+      <p id="result_empty_text">عبّي بيانات النموذج بالأسفل ثم اضغط «احسب الآن» لعرض النتيجة هنا</p>
+    </div>
+
+    <div class="result-content" id="result_content" style="display:none;">
+      <div class="result-hero">
+        <span class="eyebrow" id="total_label">الإجمالي النهائي</span>
+        <div class="hero-total-row">
+          <b id="total_card">0</b>
+          <span id="hero_currency">ر.س</span>
+        </div>
+      </div>
+      <div class="result-body">
+        <ul class="result-breakdown">
+          <li><span id="reward_label">مكافأة نهاية الخدمة</span><b id="service_reward_card">0</b></li>
+          <li><span id="leaveReward_label">تعويض رصيد الإجازات</span><b id="leaveReward_card">0</b></li>
+          <li><span id="compensation77_label">تعويض المادة 77</span><b id="compensation77_card">0</b></li>
+          <li><span id="final_month_salary_label">راتب الأيام الأخيرة (بعد الخصم)</span><b id="final_month_salary_card">0</b></li>
+          <li><span id="notice_pay_label">بدل مهلة الإشعار</span><b id="notice_pay_card">0</b></li>
+        </ul>
+        <div class="result-meta">
+          <span class="meta-chip"><span id="years_label">سنوات</span>: <b id="years_card">0</b></span>
+          <span class="meta-chip"><span id="months_label">أشهر</span>: <b id="months_card">0</b></span>
+          <span class="meta-chip"><span id="days_label">أيام</span>: <b id="days_card">0</b></span>
+          <span class="meta-chip"><span id="salary_label">الراتب</span>: <b id="salary_card">0</b></span>
+          <span class="meta-chip"><span id="insurance_rate_label">نسبة التأمينات</span>: <b id="insurance_rate_card">0%</b></span>
+          <span class="meta-chip"><span id="net_salary_label">الراتب الصافي بعد التأمينات</span>: <b id="net_salary_card">0</b></span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<div id="report_box" style="display:none;"></div>
+
+<div class="rights">
+  <span id="rights_text">بواسطة خالد فهد</span>
+  <a href="https://www.linkedin.com/in/khaled-fahad-aphri-185309269" target="_blank" rel="noopener" class="linkedin-link" aria-label="LinkedIn">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.049c.476-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124zM7.114 20.452H3.558V9h3.556v11.452z"/>
+    </svg>
+  </a>
+</div>
+
+<script>
+let lang = "ar";
+
+const t = {
+  ar: {
+    title: "حاسبة نهاية الخدمة",
+    result_empty_text: "عبّي بيانات النموذج بالأسفل ثم اضغط «احسب الآن» لعرض النتيجة هنا",
+    years_label: "سنوات",
+    months_label: "أشهر",
+    salary_label: "الراتب",
+    net_salary_label: "الراتب الصافي بعد التأمينات",
+    reward_label: "مكافأة نهاية الخدمة",
+    total_label: "الإجمالي النهائي المستحق",
+    nationality_label: "الجنسية:",
+    insurance_input_label: "نسبة خصم التأمينات (%):",
+    error_insurance: "الرجاء إدخال نسبة خصم التأمينات",
+    party_label: "جهة إنهاء العلاقة:",
+    start_label: "تاريخ بداية العمل:",
+    end_label: "تاريخ نهاية العمل:",
+    contract_label: "نوع عقد العمل:",
+    reason_label: "إنهاء علاقة العمل حسب المادة:",
+    salary_input_label: "الراتب الشهري:",
+    leave_label: "رصيد الاجازات بالايام:",
+    leaveReward_label: "تعويض رصيد الإجازات",
+    late_label: "الرواتب المتأخرة (عدد الأشهر):",
+    notice_label: "هل تم إشعار العامل؟",
+    notice_days_label: "مدة الإشعار (أيام):",
+    calc_btn: "احسب الآن",
+    print_btn: "طباعة التقرير",
+    report_title: "التقرير النهائي",
+    section_calc_basis: "بيانات الاحتساب",
+    generated_on: "تاريخ إصدار التقرير",
+    service_period_label: "فترة الخدمة",
+    section_dues: "المبالغ المالية المستحقة",
+    section_deductions: "المبالغ المالية المستقطعة",
+    total_dues_label: "إجمالي المبالغ المستحقة",
+    total_deductions_label: "إجمالي المبالغ المستقطعة",
+    net_final_label: "صافي المبلغ المستحق نهائياً",
+    duration_template: "{y} سنوات و {m} أشهر و {d} أيام",
+    article_report_label: "المادة النظامية المطبّقة:",
+    late_gross_label: "إجمالي الرواتب المتأخرة (قبل الخصم)",
+    late_insurance_deduction_label: "خصم التأمينات عن الرواتب المتأخرة",
+    no_deductions_note: "لا توجد مبالغ مستقطعة",
+    article77_comp_type_label: "نوع التعويض عن الإنهاء بدون سبب مشروع:",
+    comp_auto: "الصيغة النظامية (تلقائي)",
+    comp_fixed: "مبلغ ثابت متفق عليه بالعقد",
+    article77_fixed_amount_label: "المبلغ المتفق عليه بالعقد:",
+    original_contract_end_label: "تاريخ نهاية العقد الأصلي (للعقد محدد المدة):",
+    compensation77_label: "تعويض المادة 77",
+    section_final_month: "راتب الشهر الجزئي الأخير",
+    final_month_paid_label: "هل استُلم راتب أيام الشهر الأخير الجزئي بشكل منفصل؟",
+    fm_received: "نعم، استُلم مسبقاً",
+    fm_not_received: "لا، لم يُستلم",
+    final_month_salary_label: "راتب الأيام الأخيرة (بعد الخصم)",
+    final_month_gross_label: "راتب الأيام الأخيرة (إجمالي قبل الخصم)",
+    final_month_insurance_deduction_label: "خصم التأمينات على راتب الأيام الأخيرة",
+    period_from: "للفترة من",
+    period_to: "إلى",
+    currency: "ر.س",
+    notice_pay_label: "بدل مهلة الإشعار",
+    days_label: "أيام",
+    error_contract_type: "الرجاء اختيار نوع العقد",
+    error_contract_mismatch: "المادة المختارة لا تتوافق مع نوع العقد المحدد، الرجاء المراجعة",
+    error_fixed_amount: "الرجاء إدخال المبلغ المتفق عليه بالعقد",
+    error_original_end: "الرجاء إدخال تاريخ نهاية العقد الأصلي",
+    error_final_month_choice: "الرجاء تحديد ما إذا كان راتب الأيام الأخيرة قد استُلم",
+    rights: "بواسطة خالد فهد",
+    not_entitled: "غير مستحق",
+    error_fill: "الرجاء تعبئة جميع الحقول",
+    error_dates: "تاريخ النهاية يجب أن يكون بعد تاريخ البداية",
+    error_invalid_date: "الرجاء التأكد من صحة التاريخ المدخل (يوم/شهر/سنة غير موجود فعلياً)",
+    error_negative_values: "الرجاء التأكد أن الراتب ورصيد الإجازات وعدد الأشهر المتأخرة ومدة الإشعار كلها أرقام موجبة صحيحة (الراتب أكبر من صفر، والباقي صفر أو أكثر)",
+    error_mismatch: "المادة المختارة لا تتوافق مع جهة إنهاء العلاقة المحددة، الرجاء المراجعة",
+    company: "المنشأة",
+    employee: "الموظف",
+    saudi: "سعودي",
+    non_saudi: "غير سعودي",
+    insurance_rate_label: "نسبة التأمينات",
+    select_nationality: "اختر الجنسية",
+    select_party: "اختر الجهة",
+    select_contract: "اختر نوع العقد",
+    contract_limited: "محدد",
+    contract_unlimited: "غير محدد",
+    select_article: "اختر المادة",
+    article_word: "المادة",
+    notice_yes: "نعم",
+    notice_no: "لا",
+    placeholder_day: "اليوم",
+    placeholder_month: "الشهر",
+    placeholder_year: "السنة",
+    select_generic: "اختر",
+    section_employee: "بيانات الموظف",
+    section_duration: "مدة الخدمة",
+    section_termination: "نوع الإنهاء والعقد",
+    section_extras: "مستحقات إضافية"
+  },
+  en: {
+    title: "End of Service Calculator",
+    result_empty_text: "Fill in the form below and press \u201cCalculate\u201d to see your result here",
+    years_label: "Years",
+    months_label: "Months",
+    salary_label: "Salary",
+    net_salary_label: "Net Salary After Insurance",
+    reward_label: "End of Service Reward",
+    total_label: "Final Total Due",
+    nationality_label: "Nationality:",
+    insurance_input_label: "Insurance Deduction Rate (%):",
+    error_insurance: "Please enter the insurance deduction rate",
+    party_label: "Termination Initiated By:",
+    start_label: "Start Date:",
+    end_label: "End Date:",
+    contract_label: "Contract Type:",
+    reason_label: "Termination Article:",
+    salary_input_label: "Monthly Salary:",
+    leave_label: "Leave Balance (Days):",
+    leaveReward_label: "Leave Balance Compensation",
+    late_label: "Late Salaries (Number of Months):",
+    notice_label: "Was the employee notified?",
+    notice_days_label: "Notice Period (Days):",
+    calc_btn: "Calculate",
+    print_btn: "Print Report",
+    report_title: "Final Report",
+    section_calc_basis: "Calculation Basis",
+    generated_on: "Report Generated On",
+    service_period_label: "Service Period",
+    section_dues: "Amounts Due",
+    section_deductions: "Amounts Deducted",
+    total_dues_label: "Total Amount Due",
+    total_deductions_label: "Total Amount Deducted",
+    net_final_label: "Final Net Amount Due",
+    duration_template: "{y} years, {m} months, {d} days",
+    article_report_label: "Applicable Article:",
+    late_gross_label: "Total Late Salaries (Before Deduction)",
+    late_insurance_deduction_label: "Insurance Deduction on Late Salaries",
+    no_deductions_note: "No deductions apply",
+    article77_comp_type_label: "Compensation Type for Unlawful Termination:",
+    comp_auto: "Statutory Formula (Automatic)",
+    comp_fixed: "Fixed Amount Agreed in Contract",
+    article77_fixed_amount_label: "Amount Agreed in Contract:",
+    original_contract_end_label: "Original Contract End Date (for fixed-term contract):",
+    compensation77_label: "Article 77 Compensation",
+    section_final_month: "Final Partial Month Salary",
+    final_month_paid_label: "Was the salary for the final partial month's days received separately?",
+    fm_received: "Yes, already received",
+    fm_not_received: "No, not received",
+    final_month_salary_label: "Final Days' Salary (After Deduction)",
+    final_month_gross_label: "Final Days' Salary (Gross, Before Deduction)",
+    final_month_insurance_deduction_label: "Insurance Deduction on Final Days' Salary",
+    period_from: "For the period",
+    period_to: "to",
+    currency: "SAR",
+    notice_pay_label: "Notice Period Pay",
+    days_label: "Days",
+    error_contract_type: "Please select the contract type",
+    error_contract_mismatch: "The selected article does not match the chosen contract type. Please review.",
+    error_fixed_amount: "Please enter the amount agreed in the contract",
+    error_original_end: "Please enter the original contract end date",
+    error_final_month_choice: "Please specify whether the final days' salary was received",
+    rights: "By Khaled Fahad",
+    not_entitled: "Not Entitled",
+    error_fill: "Please fill all fields",
+    error_dates: "End date must be after start date",
+    error_invalid_date: "Please check that the entered date actually exists (day/month/year)",
+    error_negative_values: "Please make sure salary, leave balance, late months, and notice days are all valid positive numbers (salary greater than zero, the rest zero or more)",
+    error_mismatch: "The selected article does not match the chosen termination party. Please review.",
+    company: "Company",
+    employee: "Employee",
+    saudi: "Saudi",
+    non_saudi: "Non-Saudi",
+    insurance_rate_label: "Insurance Rate",
+    select_nationality: "Select Nationality",
+    select_party: "Select Party",
+    select_contract: "Select Contract Type",
+    contract_limited: "Limited",
+    contract_unlimited: "Unlimited",
+    select_article: "Select Article",
+    article_word: "Article",
+    notice_yes: "Yes",
+    notice_no: "No",
+    placeholder_day: "Day",
+    placeholder_month: "Month",
+    placeholder_year: "Year",
+    select_generic: "Select",
+    section_employee: "Employee Details",
+    section_duration: "Service Duration",
+    section_termination: "Termination Type & Contract",
+    section_extras: "Additional Entitlements"
+  }
+};
+
+// Rules per article, verified against the text of Saudi Labor Law (نظام العمل):
+// entitled: whether the employee can receive a reward at all under this article
+// validParty: which termination party the article legally applies to ("both" = either)
+// validContractType: which contract type the article legally applies to ("both" = either)
+// tiered: article 85 (resignation) reduces the reward based on completed years of service
+const articleRules = {
+  "53":  { entitled: false, validParty: "both", validContractType: "both" },      // فترة التجربة - لا مكافأة لأي طرف
+  "57":  { entitled: true,  validParty: "both", validContractType: "محدد" },       // عقد المهمة المحددة - محدد المدة فقط
+  "74":  { entitled: true,  validParty: "both", validContractType: "both" },       // أسباب مشروعة لانتهاء العقد - مكافأة كاملة
+  "75":  { entitled: true,  validParty: "both", validContractType: "غير محدد" },   // إنهاء العقد غير محدد المدة - غير محدد فقط
+  "77":  { entitled: true, validParty: "both", validContractType: "both", entitledByParty: { company: true, employee: false } }, // تعويض إنهاء بدون سبب مشروع - يستحقه الطرف المتضرر فقط
+  "79":  { entitled: true,  validParty: "both", validContractType: "both" },
+  "80":  { entitled: false, validParty: "company", validContractType: "both" },    // فصل تأديبي من المنشأة - لا مكافأة
+  "81":  { entitled: true,  validParty: "employee", validContractType: "both" },   // ترك العمل لإخلال المنشأة - مكافأة كاملة
+  "85":  { entitled: true,  validParty: "employee", validContractType: "محدد", tiered: true }, // استقالة - محدد المدة فقط، مكافأة متدرجة
+  "87":  { entitled: true,  validParty: "employee", validContractType: "محدد" }    // استثناء 85: قوة قاهرة أو زواج/وضع - محدد المدة فقط
+};
+
+// Resignation reward tiers under Article 85, based on completed years of service
+function resignationTier(years) {
+  if (years >= 10) return 1;
+  if (years >= 5) return 2 / 3;
+  if (years >= 2) return 1 / 3;
+  return 0;
+}
+
+// Strict date validation: JS's Date constructor silently rolls invalid values
+// (e.g. day 45, month 13) into a different, unrelated valid date with no error.
+// This checks the constructed date actually round-trips back to the exact
+// year/month/day entered - catching both out-of-range values and dates that
+// don't exist in a given month (e.g. February 30th).
+function isValidDate(y, m, d) {
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+}
+
+// Insurance (GOSI, pension branch) deduction rate by effective date, Saudi nationals only
+const insuranceTable = [
+  { date: new Date(2028, 6, 1), rate: 0.1175 },
+  { date: new Date(2027, 6, 1), rate: 0.1125 },
+  { date: new Date(2026, 6, 1), rate: 0.1075 },
+  { date: new Date(2025, 6, 1), rate: 0.1025 },
+  { date: new Date(2024, 6, 1), rate: 0.0975 }
+];
+
+function getInsuranceRate(dateObj) {
+  for (const entry of insuranceTable) {
+    if (dateObj >= entry.date) return entry.rate;
+  }
+  return 0.0975; // earliest known rate as floor
+}
+
+function suggestInsuranceRate() {
+  const nationality = document.getElementById('nationality').value;
+  const input = document.getElementById('insurance_rate_input');
+
+  if (nationality === "non_saudi") {
+    input.value = "";
+    input.disabled = true;
+    return;
+  }
+
+  input.disabled = false;
+
+  const ey = +document.getElementById('end_year').value;
+  const em = +document.getElementById('end_month').value;
+  const ed = +document.getElementById('end_day').value;
+
+  if (nationality === "saudi" && ey && em && ed && input.value === "") {
+    const suggested = getInsuranceRate(new Date(ey, em - 1, ed)) * 100;
+    input.value = suggested.toFixed(2);
+  }
+}
+
+// Show/hide the Article 77 compensation block and its sub-fields based on
+// the selected article, termination party, contract type, and compensation type.
+function updateArticle77Visibility() {
+  const article = document.getElementById('termination_reason').value;
+  const party = document.getElementById('termination_party').value;
+  const contractType = document.getElementById('contract_type').value;
+  const compType = document.getElementById('article77_comp_type').value;
+
+  const showBlock = (article === "77" && party === "company");
+  document.getElementById('section_article77').style.display = showBlock ? "flex" : "none";
+  document.getElementById('article77_fields').style.display = showBlock ? "grid" : "none";
+
+  document.getElementById('article77_fixed_wrapper').style.display =
+    (showBlock && compType === "fixed") ? "block" : "none";
+
+  document.getElementById('original_contract_end_wrapper').style.display =
+    (showBlock && compType === "auto" && contractType === "محدد") ? "block" : "none";
+}
+
+['termination_reason', 'termination_party', 'contract_type', 'article77_comp_type'].forEach(id => {
+  document.getElementById(id).addEventListener('change', updateArticle77Visibility);
+});
+
+document.getElementById('nationality').addEventListener('change', suggestInsuranceRate);
+document.getElementById('end_year').addEventListener('change', suggestInsuranceRate);
+document.getElementById('end_month').addEventListener('change', suggestInsuranceRate);
+document.getElementById('end_day').addEventListener('change', suggestInsuranceRate);
+
+function toggleLang() {
+  lang = lang === "ar" ? "en" : "ar";
+  const tr = t[lang];
+
+  document.getElementById("title").innerText = tr.title;
+  document.getElementById("result_empty_text").innerText = tr.result_empty_text;
+  document.getElementById("hero_currency").innerText = tr.currency;
+  document.getElementById("years_label").innerText = tr.years_label;
+  document.getElementById("months_label").innerText = tr.months_label;
+  document.getElementById("days_label").innerText = tr.days_label;
+  document.getElementById("salary_label").innerText = tr.salary_label;
+  document.getElementById("insurance_rate_label").innerText = tr.insurance_rate_label;
+  document.getElementById("net_salary_label").innerText = tr.net_salary_label;
+  document.getElementById("leaveReward_label").innerText = tr.leaveReward_label;
+  document.getElementById("reward_label").innerText = tr.reward_label;
+  document.getElementById("compensation77_label").innerText = tr.compensation77_label;
+  document.getElementById("final_month_salary_label").innerText = tr.final_month_salary_label;
+  document.getElementById("notice_pay_label").innerText = tr.notice_pay_label;
+  document.getElementById("total_label").innerText = tr.total_label;
+
+  document.getElementById("nationality_label").innerText = tr.nationality_label;
+  document.getElementById("insurance_input_label").innerText = tr.insurance_input_label;
+  document.getElementById("party_label").innerText = tr.party_label;
+  document.getElementById("start_label").innerText = tr.start_label;
+  document.getElementById("end_label").innerText = tr.end_label;
+  document.getElementById("contract_label").innerText = tr.contract_label;
+  document.getElementById("reason_label").innerText = tr.reason_label;
+  document.getElementById("salary_input_label").innerText = tr.salary_input_label;
+  document.getElementById("leave_label").innerText = tr.leave_label;
+  document.getElementById("late_label").innerText = tr.late_label;
+  document.getElementById("notice_label").innerText = tr.notice_label;
+  document.getElementById("notice_days_label").innerText = tr.notice_days_label;
+  document.getElementById("article77_comp_type_label").innerText = tr.article77_comp_type_label;
+  document.getElementById("article77_fixed_amount_label").innerText = tr.article77_fixed_amount_label;
+  document.getElementById("original_contract_end_label").innerText = tr.original_contract_end_label;
+  document.getElementById("final_month_paid_label").innerText = tr.final_month_paid_label;
+
+  document.getElementById("calc_btn_text").innerText = tr.calc_btn;
+  document.getElementById("print_btn_text").innerText = tr.print_btn;
+  document.getElementById("rights_text").innerText = tr.rights;
+
+  document.getElementById("nationality").options[0].text = tr.select_nationality;
+  document.getElementById("nationality").options[1].text = tr.saudi;
+  document.getElementById("nationality").options[2].text = tr.non_saudi;
+  document.getElementById("termination_party").options[0].text = tr.select_party;
+  document.getElementById("termination_party").options[1].text = tr.company;
+  document.getElementById("termination_party").options[2].text = tr.employee;
+
+  const contractSelect = document.getElementById("contract_type");
+  contractSelect.options[0].text = tr.select_contract;
+  contractSelect.options[1].text = tr.contract_limited;
+  contractSelect.options[2].text = tr.contract_unlimited;
+
+  const articleSelect = document.getElementById("termination_reason");
+  articleSelect.options[0].text = tr.select_article;
+  for (let i = 1; i < articleSelect.options.length; i++) {
+    articleSelect.options[i].text = tr.article_word + " " + articleSelect.options[i].value;
+  }
+
+  const noticeSelect = document.getElementById("notice_status");
+  noticeSelect.options[0].text = tr.select_generic;
+  noticeSelect.options[1].text = tr.notice_yes;
+  noticeSelect.options[2].text = tr.notice_no;
+
+  const comp77Select = document.getElementById("article77_comp_type");
+  comp77Select.options[0].text = tr.comp_auto;
+  comp77Select.options[1].text = tr.comp_fixed;
+
+  const fmSelect = document.getElementById("final_month_paid");
+  fmSelect.options[0].text = tr.select_generic;
+  fmSelect.options[1].text = tr.fm_not_received;
+  fmSelect.options[2].text = tr.fm_received;
+
+  document.getElementById("start_day").placeholder = tr.placeholder_day;
+  document.getElementById("start_month").placeholder = tr.placeholder_month;
+  document.getElementById("start_year").placeholder = tr.placeholder_year;
+  document.getElementById("end_day").placeholder = tr.placeholder_day;
+  document.getElementById("end_month").placeholder = tr.placeholder_month;
+  document.getElementById("end_year").placeholder = tr.placeholder_year;
+  document.getElementById("orig_end_day").placeholder = tr.placeholder_day;
+  document.getElementById("orig_end_month").placeholder = tr.placeholder_month;
+  document.getElementById("orig_end_year").placeholder = tr.placeholder_year;
+  document.getElementById("insurance_rate_input").options[0].text = tr.select_generic;
+
+  document.getElementById("section_employee").innerText = tr.section_employee;
+  document.getElementById("section_duration").innerText = tr.section_duration;
+  document.getElementById("section_termination").innerText = tr.section_termination;
+  document.getElementById("section_article77_text").innerText = tr.compensation77_label;
+  document.getElementById("section_final_month").innerText = tr.section_final_month;
+  document.getElementById("section_extras").innerText = tr.section_extras;
+
+  document.body.dir = lang === "ar" ? "rtl" : "ltr";
+
+  clearError();
+}
+
+function showError(msg) {
+  const box = document.getElementById("error_box");
+  box.innerText = msg;
+  box.style.display = "block";
+}
+
+function clearError() {
+  const box = document.getElementById("error_box");
+  box.style.display = "none";
+  box.innerText = "";
+}
+
+function calculate() {
+  clearError();
+  const tr = t[lang];
+
+  const sd = +document.getElementById('start_day').value;
+  const sm = +document.getElementById('start_month').value;
+  const sy = +document.getElementById('start_year').value;
+
+  const ed = +document.getElementById('end_day').value;
+  const em = +document.getElementById('end_month').value;
+  const ey = +document.getElementById('end_year').value;
+
+  const salary = +document.getElementById('salary').value;
+  const leave = +document.getElementById('leave_balance').value || 0;
+  const lateMonths = +document.getElementById('late_months').value || 0;
+
+  const nationality = document.getElementById('nationality').value;
+  const party = document.getElementById('termination_party').value;
+  const article = document.getElementById('termination_reason').value;
+  const contractType = document.getElementById('contract_type').value;
+  const insuranceInputVal = document.getElementById('insurance_rate_input').value;
+  const finalMonthPaid = document.getElementById('final_month_paid').value;
+  const noticeStatus = document.getElementById('notice_status').value;
+  const noticeDays = +document.getElementById('notice_days').value || 0;
+
+  if (!sd || !sm || !sy || !ed || !em || !ey || !salary || !nationality || !party || !article || !contractType) {
+    showError(tr.error_fill);
+    return;
+  }
+
+  if (nationality === "saudi" && insuranceInputVal === "") {
+    showError(tr.error_insurance);
+    return;
+  }
+
+  if (!finalMonthPaid) {
+    showError(tr.error_final_month_choice);
+    return;
+  }
+
+  if (!isValidDate(sy, sm, sd) || !isValidDate(ey, em, ed)) {
+    showError(tr.error_invalid_date);
+    return;
+  }
+
+  if (salary <= 0 || leave < 0 || lateMonths < 0 || noticeDays < 0) {
+    showError(tr.error_negative_values);
+    return;
+  }
+
+  const startDate = new Date(sy, sm - 1, sd);
+  const endDate = new Date(ey, em - 1, ed);
+
+  if (endDate <= startDate) {
+    showError(tr.error_dates);
+    return;
+  }
+
+  const rule = articleRules[article];
+  if (rule.validParty !== "both" && rule.validParty !== party) {
+    showError(tr.error_mismatch);
+    return;
+  }
+  if (rule.validContractType !== "both" && rule.validContractType !== contractType) {
+    showError(tr.error_contract_mismatch);
+    return;
+  }
+
+  // Some articles (e.g. 77) only entitle the harmed party - override the base
+  // entitlement when the rule specifies different outcomes per party.
+  const partyEntitled = rule.entitledByParty ? rule.entitledByParty[party] : rule.entitled;
+
+  // Precise years/months/days difference. Days are normalized on a 30-day month
+  // basis (matching the law's own day-divisor convention), and folded into a
+  // continuous decimal-month figure so partial months/years accrue proportionally
+  // down to the day, per Article 84 ("مكافأة عن أجزاء السنة بنسبة ما قضاه منها").
+  let years = endDate.getFullYear() - startDate.getFullYear();
+  let months = endDate.getMonth() - startDate.getMonth();
+  let days = endDate.getDate() - startDate.getDate();
+  if (days < 0) { months -= 1; days += 30; }
+  if (months < 0) { years -= 1; months += 12; }
+
+  const totalMonthsDecimal = years * 12 + months + (days / 30);
+
+  // Insurance rate: entered manually by whoever performs the calculation.
+  // Non-Saudi always uses 0, regardless of what's in the field.
+  const rate = nationality === "saudi" ? (+insuranceInputVal / 100) : 0;
+  const netSalary = salary * (1 - rate);
+
+  // Proportional end-of-service reward (half-month/year for first 5 years, full month/year after)
+  let reward = 0;
+  if (partyEntitled) {
+    const first60 = Math.min(totalMonthsDecimal, 60);
+    const rest = Math.max(totalMonthsDecimal - 60, 0);
+    reward = first60 * (salary / 24) + rest * (salary / 12);
+    if (rule.tiered) {
+      reward = reward * resignationTier(years);
+    }
+  }
+
+  const leaveReward = leave * (salary / 30);
+  const lateGross = lateMonths * salary;
+  const lateInsuranceDeduction = lateGross - (lateMonths * netSalary);
+  const lateTotal = lateGross - lateInsuranceDeduction;
+
+  // Final partial-month salary: wage owed for the days actually worked in the
+  // last incomplete month, separate from the end-of-service reward. Only added
+  // if the person confirms it was not already paid through regular payroll.
+  //
+  // Payroll cycles always run calendar-month (1st of the month through the
+  // month's last day), regardless of the employee's original hire date. So the
+  // final partial period is always "day 1 of the end month" -> "last working
+  // day" - NOT a remainder counted back from the hire-date cycle.
+  const finalPeriodStart = new Date(ey, em - 1, 1);
+  const finalPeriodDays = ed; // day-of-month of the end date = days from the 1st through the last working day, inclusive
+
+  const finalMonthGross = (finalMonthPaid === "no") ? finalPeriodDays * (salary / 30) : 0;
+  const finalMonthInsuranceDeduction = finalMonthGross * rate;
+  const finalMonthSalary = finalMonthGross - finalMonthInsuranceDeduction;
+
+  // Notice pay: optional field left to the person's actual situation. If notice
+  // was not given despite the agreed/legal notice period, the wage for that
+  // period is owed. Left blank ("") means not applicable / not answered - no line added.
+  const noticePay = (noticeStatus === "no") ? noticeDays * (salary / 30) : 0;
+
+  // Article 77 compensation: independent of, and additional to, the standard
+  // reward. Applies only when the company terminated without legitimate cause
+  // (i.e. the employee is the harmed party per the entitledByParty rule above).
+  let compensation77 = 0;
+  let article77CompType = null;
+  let origEndDateForReport = null;
+  if (article === "77" && party === "company") {
+    const compType = document.getElementById('article77_comp_type').value;
+    article77CompType = compType;
+
+    if (compType === "fixed") {
+      const fixedVal = document.getElementById('article77_fixed_amount').value;
+      if (fixedVal === "") {
+        showError(tr.error_fixed_amount);
+        return;
+      }
+      if (+fixedVal <= 0) {
+        showError(tr.error_negative_values);
+        return;
+      }
+      compensation77 = +fixedVal;
+    } else {
+      // Statutory formula: 15 days/year (unlimited-term) = half-month per year,
+      // or wage for the remaining period of a fixed-term contract; minimum 2 months' wage.
+      if (contractType === "غير محدد") {
+        compensation77 = (totalMonthsDecimal / 12) * (salary / 2);
+      } else {
+        const oed = +document.getElementById('orig_end_day').value;
+        const oem = +document.getElementById('orig_end_month').value;
+        const oey = +document.getElementById('orig_end_year').value;
+        if (!oed || !oem || !oey) {
+          showError(tr.error_original_end);
+          return;
+        }
+        if (!isValidDate(oey, oem, oed)) {
+          showError(tr.error_invalid_date);
+          return;
+        }
+        const origEndDate = new Date(oey, oem - 1, oed);
+        origEndDateForReport = origEndDate;
+        const remainingMonths = Math.max(
+          (origEndDate.getFullYear() - endDate.getFullYear()) * 12 +
+          (origEndDate.getMonth() - endDate.getMonth()) +
+          (origEndDate.getDate() - endDate.getDate()) / 30,
+          0
+        );
+        compensation77 = remainingMonths * salary;
+      }
+      compensation77 = Math.max(compensation77, salary * 2); // minimum 2 months' wage
+    }
+  }
+
+  const total = reward + leaveReward + lateTotal + finalMonthSalary + compensation77 + noticePay;
+
+  document.getElementById("years_card").innerText = years;
+  document.getElementById("months_card").innerText = months;
+  document.getElementById("days_card").innerText = days;
+  document.getElementById("salary_card").innerText = salary.toFixed(2);
+  document.getElementById("insurance_rate_card").innerText = (rate * 100).toFixed(2) + "%";
+  document.getElementById("net_salary_card").innerText = netSalary.toFixed(2);
+  document.getElementById("leaveReward_card").innerText = leaveReward.toFixed(2);
+  document.getElementById("compensation77_card").innerText = compensation77.toFixed(2);
+  document.getElementById("final_month_salary_card").innerText = finalMonthSalary.toFixed(2);
+  document.getElementById("notice_pay_card").innerText = noticePay.toFixed(2);
+
+  const effectivelyEntitled = partyEntitled && !(rule.tiered && resignationTier(years) === 0);
+
+  const rewardCardEl = document.getElementById("service_reward_card");
+  if (effectivelyEntitled) {
+    rewardCardEl.classList.remove("warn");
+    rewardCardEl.innerText = reward.toFixed(2);
+  } else {
+    rewardCardEl.classList.add("warn");
+    rewardCardEl.innerText = tr.not_entitled;
+  }
+
+  document.getElementById("total_card").innerText = total.toFixed(2);
+
+  document.getElementById("result_empty").style.display = "none";
+  document.getElementById("result_content").style.display = "block";
+
+  generateReport({
+    years, months, days, salary, netSalary, rate, party, nationality, article, contractType,
+    leave, lateMonths, noticeStatus, noticeDays, article77CompType, origEndDateForReport,
+    entitled: effectivelyEntitled, reward, leaveReward,
+    lateGross, lateInsuranceDeduction, lateTotal,
+    finalMonthGross, finalMonthInsuranceDeduction, finalMonthSalary, finalPeriodStart,
+    compensation77, noticePay, total,
+    startDate, endDate
+  });
+}
+
+function formatDate(d) {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function generateReport(d) {
+  const box = document.getElementById("report_box");
+  box.style.display = "block";
+  const tr = t[lang];
+
+  const nationalityText = d.nationality === "saudi" ? tr.saudi : tr.non_saudi;
+  const partyText = d.party === "company" ? tr.company : tr.employee;
+  const contractTypeText = d.contractType === "محدد" ? tr.contract_limited : tr.contract_unlimited;
+  const rewardText = d.entitled ? d.reward.toFixed(2) : tr.not_entitled;
+  const durationText = tr.duration_template.replace('{y}', d.years).replace('{m}', d.months).replace('{d}', d.days);
+
+  const lateMonthsItem = d.lateMonths > 0
+    ? `<div class="intro-item"><span>${tr.late_label}</span><b>${d.lateMonths}</b></div>`
+    : "";
+  const noticeStatusItem = d.noticeStatus
+    ? `<div class="intro-item"><span>${tr.notice_label}</span><b>${d.noticeStatus === "yes" ? tr.notice_yes : tr.notice_no}</b></div>`
+    : "";
+  const noticeDaysItem = d.noticeStatus === "no"
+    ? `<div class="intro-item"><span>${tr.notice_days_label}</span><b>${d.noticeDays}</b></div>`
+    : "";
+  const article77CompTypeItem = d.article77CompType
+    ? `<div class="intro-item"><span>${tr.article77_comp_type_label}</span><b>${d.article77CompType === "fixed" ? tr.comp_fixed : tr.comp_auto}</b></div>`
+    : "";
+  const origEndDateItem = d.origEndDateForReport
+    ? `<div class="intro-item"><span>${tr.original_contract_end_label}</span><b>${formatDate(d.origEndDateForReport)}</b></div>`
+    : "";
+  const finalPeriodText = `${tr.period_from} ${formatDate(d.finalPeriodStart)} ${tr.period_to} ${formatDate(d.endDate)}`;
+
+  const now = new Date();
+  const stamp = now.toLocaleString(lang === "ar" ? "ar-SA" : "en-GB", {
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
+    numberingSystem: "latn"
+  });
+
+  // ---- Dues rows ----
+  const finalMonthGrossRow = d.finalMonthGross > 0
+    ? `<tr><th>${tr.final_month_gross_label}<span class="row-note">${finalPeriodText}</span></th><td>${d.finalMonthGross.toFixed(2)}</td></tr>`
+    : "";
+  const compensationRow = d.compensation77 > 0
+    ? `<tr><th>${tr.compensation77_label}</th><td>${d.compensation77.toFixed(2)}</td></tr>`
+    : "";
+  const noticePayRow = d.noticePay > 0
+    ? `<tr><th>${tr.notice_pay_label}</th><td>${d.noticePay.toFixed(2)}</td></tr>`
+    : "";
+
+  const totalDuesGross = d.reward + d.leaveReward + d.lateGross + d.finalMonthGross + d.compensation77 + d.noticePay;
+
+  // ---- Deduction rows ----
+  const lateDeductionRow = d.lateInsuranceDeduction > 0
+    ? `<tr><th>${tr.late_insurance_deduction_label}<span class="row-note">(${d.lateMonths} ${lang === "ar" ? "شهر" : "mo"})</span></th><td>${d.lateInsuranceDeduction.toFixed(2)}</td></tr>`
+    : "";
+  const finalMonthDeductionRow = d.finalMonthInsuranceDeduction > 0
+    ? `<tr><th>${tr.final_month_insurance_deduction_label}<span class="row-note">${finalPeriodText}</span></th><td>${d.finalMonthInsuranceDeduction.toFixed(2)}</td></tr>`
+    : "";
+
+  const totalDeductions = d.lateInsuranceDeduction + d.finalMonthInsuranceDeduction;
+  const deductionsRows = totalDeductions > 0
+    ? `${lateDeductionRow}${finalMonthDeductionRow}`
+    : `<tr><td colspan="2" style="text-align:center; color:var(--ink-soft);">${tr.no_deductions_note}</td></tr>`;
+
+  box.innerHTML = `
+    <div class="report-letterhead">
+      <div class="report-title-block">
+        <h2>${tr.report_title}</h2>
+      </div>
+      <div class="report-meta">
+        <span>${tr.generated_on}</span>
+        <strong>${stamp}</strong>
+      </div>
+    </div>
+
+    <div class="report-intro">
+      <div class="intro-item"><span>${tr.start_label}</span><b>${formatDate(d.startDate)}</b></div>
+      <div class="intro-item"><span>${tr.end_label}</span><b>${formatDate(d.endDate)}</b></div>
+      <div class="intro-item"><span>${tr.service_period_label}</span><b>${durationText}</b></div>
+      <div class="intro-item"><span>${tr.nationality_label}</span><b>${nationalityText}</b></div>
+      <div class="intro-item"><span>${tr.party_label}</span><b>${partyText}</b></div>
+      <div class="intro-item"><span>${tr.contract_label}</span><b>${contractTypeText}</b></div>
+      <div class="intro-item"><span>${tr.article_report_label}</span><b>${tr.article_word} ${d.article}</b></div>
+      <div class="intro-item"><span>${tr.salary_label}</span><b>${d.salary.toFixed(2)} ${tr.currency}</b></div>
+      <div class="intro-item"><span>${tr.insurance_rate_label}</span><b>${(d.rate * 100).toFixed(2)}%</b></div>
+      <div class="intro-item"><span>${tr.net_salary_label}</span><b>${d.netSalary.toFixed(2)} ${tr.currency}</b></div>
+      <div class="intro-item"><span>${tr.leave_label}</span><b>${d.leave}</b></div>
+      ${lateMonthsItem}
+      ${noticeStatusItem}
+      ${noticeDaysItem}
+      ${article77CompTypeItem}
+      ${origEndDateItem}
+    </div>
+
+    <table>
+      <tr class="ledger-head"><td colspan="2">${tr.section_dues}</td></tr>
+      <tr><th>${tr.reward_label}</th><td>${rewardText}</td></tr>
+      <tr><th>${tr.leaveReward_label}</th><td>${d.leaveReward.toFixed(2)}</td></tr>
+      <tr><th>${tr.late_gross_label}</th><td>${d.lateGross.toFixed(2)}</td></tr>
+      ${finalMonthGrossRow}
+      ${compensationRow}
+      ${noticePayRow}
+      <tr class="ledger-subtotal"><th>${tr.total_dues_label}</th><td>${totalDuesGross.toFixed(2)} ${tr.currency}</td></tr>
+      <tr class="ledger-head"><td colspan="2">${tr.section_deductions}</td></tr>
+      ${deductionsRows}
+      <tr class="ledger-subtotal"><th>${tr.total_deductions_label}</th><td>${totalDeductions.toFixed(2)} ${tr.currency}</td></tr>
+    </table>
+
+    <div class="report-net-box">
+      <span>${tr.net_final_label}</span>
+      <strong>${d.total.toFixed(2)} ${tr.currency}</strong>
+    </div>
+
+    <p class="report-footer-note">${tr.rights} · ${stamp}</p>
+  `;
+}
+
+function printReport() {
+  const box = document.getElementById("report_box");
+  if (box.style.display === "none" || !box.innerHTML.trim()) {
+    showError(lang === "ar" ? "الرجاء الضغط على (احسب الآن) أولاً" : "Please click Calculate first");
+    return;
+  }
+
+  const tr = t[lang];
+  const printWindow = window.open("", "_blank");
+
+  printWindow.document.write(`
+    <html lang="${lang}" dir="${lang === 'ar' ? 'rtl' : 'ltr'}">
+    <head>
+      <meta charset="UTF-8">
+      <title>${tr.report_title}</title>
+      <style>
+        :root {
+          --ink: #141917;
+          --ink-soft: #66695c;
+          --line: #e2ddd2;
+          --surface: #fffdf9;
+          --bg: #f2eee4;
+          --primary: #43453c;
+          --primary-dark: #141917;
+          --primary-soft: #e8e7e1;
+          --gold: #ddd0bc;
+          --gold-soft: #f2ece0;
+          --danger: #a8432b;
+          --danger-soft: #f7e9e3;
+        }
+        @page { margin: 13mm 16mm; }
+        body {
+          font-family: 'IBM Plex Sans Arabic', 'Cairo', sans-serif;
+          color: var(--ink);
+          background: var(--bg);
+          margin: 0;
+          padding: 4mm 2.5mm;
+          font-size: 15px;
+        }
+        .report-sheet {
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-radius: 14px;
+          padding: 20px 24px 20px;
+        }
+
+        .report-letterhead {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          gap: 18px;
+          flex-wrap: wrap;
+          padding-bottom: 14px;
+          margin-bottom: 16px;
+          border-bottom: 2px solid var(--gold-soft);
+        }
+        .report-title-block { border-inline-start: 3px solid var(--gold); padding-inline-start: 15px; }
+        .report-letterhead h2 { margin: 0; font-size: 19px; font-weight: 700; color: var(--primary); }
+        .report-meta { text-align: end; font-size: 12px; color: var(--ink-soft); display: flex; flex-direction: column; gap: 2px; }
+        .report-meta strong { color: var(--ink); font-weight: 600; }
+
+        .report-intro {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px 20px;
+          margin-bottom: 16px;
+          padding-bottom: 14px;
+          border-bottom: 1px solid var(--line);
+        }
+        .intro-item span { display: block; font-size: 11.5px; color: var(--ink-soft); margin-bottom: 3px; }
+        .intro-item b { display: block; font-size: 14.5px; color: var(--ink); font-weight: 700; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 2px; }
+        th, td { border-bottom: 1px solid var(--line); padding: 9px 10px; font-size: 15.5px; text-align: start; }
+        th { color: var(--ink-soft); font-weight: 600; width: 60%; }
+        td { color: var(--ink); font-weight: 600; text-align: start; }
+        .row-note { display: block; font-size: 11.5px; font-weight: 400; color: var(--ink-soft); margin-top: 2px; }
+
+        tr.ledger-head td {
+          background: var(--bg); color: var(--primary); font-weight: 700; font-size: 13px;
+          text-transform: uppercase; letter-spacing: 0.6px; padding: 9px 10px;
+        }
+        tr.ledger-subtotal th, tr.ledger-subtotal td {
+          background: var(--primary-soft); color: var(--primary-dark); font-size: 16px; font-weight: 700;
+          border-bottom: none; border-top: 2px solid var(--primary);
+        }
+
+        .report-net-box {
+          margin-top: 16px; padding: 16px 24px; border-radius: 12px;
+          background: linear-gradient(150deg, var(--primary) 0%, var(--primary-dark) 100%);
+          display: flex; justify-content: space-between; align-items: center;
+        }
+        .report-net-box span { color: rgba(255,255,255,0.75); font-size: 13.5px; font-weight: 600; }
+        .report-net-box strong { color: var(--gold-soft); font-size: 23px; font-weight: 700; }
+
+        .report-footer-note { margin: 14px 0 0; font-size: 11.5px; color: var(--ink-soft); text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="report-sheet">
+      ${box.innerHTML}
+      </div>
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
+</script>
+
+</body>
+</html>
