@@ -121,21 +121,139 @@
 
   /* ================= APP SHELL ================= */
   .app-shell {
-    max-width: 1180px;
+    max-width: 1420px;
     margin: -34px auto 0;
     padding: 0 20px 20px;
     display: grid;
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: 320px 1fr 340px;
     gap: 22px;
     align-items: start;
     position: relative;
     z-index: 3;
+  }
+  @media (max-width: 1240px) {
+    .app-shell { grid-template-columns: 1fr 340px; }
+    .guide-panel { grid-column: 1 / -1; order: 3; position: static !important; }
   }
   @media (max-width: 880px) {
     .app-shell { grid-template-columns: 1fr; margin-top: -20px; }
   }
   @media (max-width: 480px) {
     .btn-row button { padding: 13px 10px; font-size: 13.5px; gap: 6px; }
+  }
+
+  /* ================= GUIDE PANEL ================= */
+  .guide-panel {
+    position: sticky;
+    top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  @media (max-width: 880px) { .guide-panel { position: static; } }
+
+  .guide-head {
+    padding: 16px 20px 14px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  .guide-head h3 {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 0.2px;
+  }
+  .guide-body { padding: 16px 18px 18px; }
+
+  .rule-card {
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 13px 15px;
+    margin-bottom: 10px;
+    background: #fbfbfa;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .rule-card:last-child { margin-bottom: 0; }
+  .rule-card.is-active {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+  .rule-card.is-none {
+    border-color: #e3b3a5;
+    background: var(--danger-soft);
+  }
+  .rule-card h4 {
+    margin: 0 0 7px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .rule-card.is-none h4 { color: var(--danger); }
+  .rule-card p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.75;
+    color: var(--ink-soft);
+  }
+  .rule-card.is-active p { color: var(--ink); }
+  .tier-list {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    font-size: 12px;
+    line-height: 1.9;
+    color: var(--ink-soft);
+  }
+  .rule-card.is-active .tier-list { color: var(--ink); }
+  .tier-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    border-bottom: 1px dashed var(--line);
+    padding: 2px 0;
+  }
+  .tier-list li:last-child { border-bottom: none; }
+  .tier-list b { font-weight: 700; color: var(--ink); white-space: nowrap; }
+
+  .article-text-box {
+    margin-top: 16px;
+    padding-top: 15px;
+    border-top: 1px dashed var(--line);
+  }
+  .article-text-box .atb-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .article-text-box .atb-title {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+  .article-text-box .atb-text {
+    font-size: 11.5px;
+    line-height: 1.95;
+    color: var(--ink);
+    max-height: 260px;
+    overflow-y: auto;
+    padding-inline-end: 6px;
+  }
+  .article-text-box .atb-text::-webkit-scrollbar { width: 5px; }
+  .article-text-box .atb-text::-webkit-scrollbar-thumb {
+    background: var(--line); border-radius: 3px;
+  }
+  .atb-empty {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    line-height: 1.8;
+    font-style: italic;
   }
 
   /* ================= RESULT PANEL ================= */
@@ -304,11 +422,21 @@
   select {
     appearance: none;
     -webkit-appearance: none;
-    padding-inline-end: 34px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235b6660' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    /* The arrow sits on the side opposite where text begins: left in RTL,
+       right in LTR. Both the reserved padding and the arrow position must
+       flip together with the language, otherwise the padding is reserved on
+       one side while the arrow stays on the other - which is what caused
+       the arrow to overlap the option text in English. */
+    padding-inline-end: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235b6660' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
+    background-size: 13px 13px;
     background-position: left 12px center;
     cursor: pointer;
+  }
+  [dir="ltr"] select,
+  html[dir="ltr"] body select {
+    background-position: right 12px center;
   }
   input:focus, select:focus {
     outline: none;
@@ -509,6 +637,35 @@
     border-radius: 8px;
   }
 
+  .report-article-text {
+    margin-top: 22px;
+    padding: 16px 18px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .report-article-text .rat-head {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .report-article-text .rat-title {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 9px;
+  }
+  .report-article-text p {
+    margin: 0 0 8px;
+    font-size: 12px;
+    line-height: 1.9;
+    color: var(--ink);
+  }
+  .report-article-text p:last-child { margin-bottom: 0; }
+
   .report-footer-note {
     margin: 20px 0 0;
     font-size: 11px;
@@ -527,6 +684,44 @@
 </header>
 
 <div class="app-shell">
+
+  <aside class="guide-panel" id="guide_panel">
+    <div class="guide-head">
+      <h3 id="guide_title">كيف تُحتسب المكافأة</h3>
+    </div>
+    <div class="guide-body">
+
+      <div class="rule-card" id="rule_84">
+        <h4 id="rule_84_title">المادة 84 — المكافأة كاملة</h4>
+        <p id="rule_84_text">أجر نصف شهر عن كل سنة من السنوات الخمس الأولى، وأجر شهر كامل عن كل سنة من السنوات التالية. وتُحسب أجزاء السنة بنسبة ما قضاه العامل منها.</p>
+      </div>
+
+      <div class="rule-card" id="rule_85">
+        <h4 id="rule_85_title">المادة 85 — احتساب متدرّج</h4>
+        <p id="rule_85_text">يُطبَّق عند إنهاء العلاقة من طرف العامل، فتُخفَّض المكافأة حسب مدة الخدمة:</p>
+        <ul class="tier-list">
+          <li><span id="tier_1_label">أقل من سنتين</span><b id="tier_1_val">لا تُستحق</b></li>
+          <li><span id="tier_2_label">سنتان إلى خمس</span><b id="tier_2_val">الثلث</b></li>
+          <li><span id="tier_3_label">خمس إلى عشر</span><b id="tier_3_val">الثلثان</b></li>
+          <li><span id="tier_4_label">عشر فأكثر</span><b id="tier_4_val">كاملة</b></li>
+        </ul>
+      </div>
+
+      <div class="rule-card is-none" id="rule_none" style="display:none;">
+        <h4 id="rule_none_title">لا تُستحق المكافأة</h4>
+        <p id="rule_none_text">نصّت المادة المختارة صراحةً على عدم استحقاق المكافأة في هذي الحالة.</p>
+      </div>
+
+      <div class="article-text-box">
+        <span class="atb-label" id="atb_label">نص المادة</span>
+        <div id="atb_content">
+          <p class="atb-empty" id="atb_empty">اختر المادة النظامية من النموذج ليظهر نصها هنا.</p>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
 
   <div class="main-col">
 
@@ -793,11 +988,13 @@
       </div>
       <div class="result-body">
         <ul class="result-breakdown">
-          <li><span id="reward_label">مكافأة نهاية الخدمة</span><b id="service_reward_card">0</b></li>
-          <li><span id="leaveReward_label">تعويض رصيد الإجازات</span><b id="leaveReward_card">0</b></li>
-          <li><span id="compensation77_label">تعويض المادة 77</span><b id="compensation77_card">0</b></li>
-          <li><span id="final_month_salary_label">راتب الأيام الأخيرة (بعد الخصم)</span><b id="final_month_salary_card">0</b></li>
-          <li><span id="notice_pay_label">بدل مهلة الإشعار</span><b id="notice_pay_card">0</b></li>
+          <li id="row_reward"><span id="reward_label">مكافأة نهاية الخدمة</span><b id="service_reward_card">0</b></li>
+          <li id="row_leave"><span id="leaveReward_label">تعويض رصيد الإجازات</span><b id="leaveReward_card">0</b></li>
+          <li id="row_late"><span id="lateTotal_label">الرواتب المتأخرة (بعد الخصم)</span><b id="lateTotal_card">0</b></li>
+          <li id="row_comp77"><span id="compensation77_label">تعويض المادة 77</span><b id="compensation77_card">0</b></li>
+          <li id="row_final_month"><span id="final_month_salary_label">راتب الأيام الأخيرة (بعد الخصم)</span><b id="final_month_salary_card">0</b></li>
+          <li id="row_notice"><span id="notice_pay_label">بدل مهلة الإشعار</span><b id="notice_pay_card">0</b></li>
+          <li id="row_debt"><span id="debt_deduct_label">خصم السلفة / العهدة</span><b id="debt_deduct_card">0</b></li>
         </ul>
         <div class="result-meta">
           <span class="meta-chip"><span id="years_label">سنوات</span>: <b id="years_card">0</b></span>
@@ -830,6 +1027,30 @@ let lang = "ar";
 const t = {
   ar: {
     title: "حاسبة نهاية الخدمة",
+    guide_title: "كيف تُحتسب المكافأة",
+    lateTotal_label: "الرواتب المتأخرة (بعد الخصم)",
+    debt_deduct_label: "خصم السلفة / العهدة",
+    calc_rule_label: "قاعدة الاحتساب المطبّقة:",
+    calc_rule_84: "المادة 84 — المكافأة كاملة",
+    calc_rule_85: "المادة 85 — احتساب متدرّج",
+    calc_rule_none: "لا تُستحق المكافأة",
+    report_article_text_title: "نص المادة النظامية المطبّقة",
+    rule_84_title: "المادة 84 — المكافأة كاملة",
+    rule_84_text: "أجر نصف شهر عن كل سنة من السنوات الخمس الأولى، وأجر شهر كامل عن كل سنة من السنوات التالية. وتُحسب أجزاء السنة بنسبة ما قضاه العامل منها.",
+    rule_85_title: "المادة 85 — احتساب متدرّج",
+    rule_85_text: "يُطبَّق عند إنهاء العلاقة من طرف العامل، فتُخفَّض المكافأة حسب مدة الخدمة:",
+    tier_1_label: "أقل من سنتين",
+    tier_1_val: "لا تُستحق",
+    tier_2_label: "سنتان إلى خمس",
+    tier_2_val: "الثلث",
+    tier_3_label: "خمس إلى عشر",
+    tier_3_val: "الثلثان",
+    tier_4_label: "عشر فأكثر",
+    tier_4_val: "كاملة",
+    rule_none_title: "لا تُستحق المكافأة",
+    rule_none_text: "نصّت المادة المختارة صراحةً على عدم استحقاق المكافأة في هذي الحالة.",
+    atb_label: "نص المادة",
+    atb_empty: "اختر المادة النظامية من النموذج ليظهر نصها هنا.",
     result_empty_text: "عبّي بيانات النموذج بالأسفل ثم اضغط «احسب الآن» لعرض النتيجة هنا",
     years_label: "سنوات",
     months_label: "أشهر",
@@ -955,6 +1176,30 @@ const t = {
   },
   en: {
     title: "End of Service Calculator",
+    guide_title: "How the Reward Is Calculated",
+    lateTotal_label: "Late Salaries (After Deduction)",
+    debt_deduct_label: "Advance / Custody Deduction",
+    calc_rule_label: "Applicable Calculation Rule:",
+    calc_rule_84: "Article 84 — Full Reward",
+    calc_rule_85: "Article 85 — Tiered Calculation",
+    calc_rule_none: "No Reward Due",
+    report_article_text_title: "Text of the Applicable Article",
+    rule_84_title: "Article 84 — Full Reward",
+    rule_84_text: "Half a month's wage for each of the first five years, and a full month's wage for each subsequent year. Partial years accrue proportionally.",
+    rule_85_title: "Article 85 — Tiered Calculation",
+    rule_85_text: "Applies when the employee ends the relationship; the reward is reduced by length of service:",
+    tier_1_label: "Under two years",
+    tier_1_val: "Not entitled",
+    tier_2_label: "Two to five years",
+    tier_2_val: "One third",
+    tier_3_label: "Five to ten years",
+    tier_3_val: "Two thirds",
+    tier_4_label: "Ten years or more",
+    tier_4_val: "Full",
+    rule_none_title: "No Reward Due",
+    rule_none_text: "The selected article expressly provides that no reward is due in this case.",
+    atb_label: "Article Text",
+    atb_empty: "Select a statutory article from the form to view its text here.",
     result_empty_text: "Fill in the form below and press \u201cCalculate\u201d to see your result here",
     years_label: "Years",
     months_label: "Months",
@@ -1085,6 +1330,87 @@ const t = {
 // validParty: which termination party the article legally applies to ("both" = either)
 // validContractType: which contract type the article legally applies to ("both" = either)
 // tiered: article 85 (resignation) reduces the reward based on completed years of service
+// Official article texts, transcribed verbatim from the Qiwa platform's
+// published text of نظام العمل and independently cross-checked against
+// multiple Saudi legal sources. Article 53's text here is the AMENDED
+// version (180-day cap), not the older 90-day wording still circulating
+// on some sites. Displayed read-only in the guide panel so the person can
+// read the actual provision behind whatever the calculator computed.
+const articleTexts = {
+  "18": {
+    title: "المادة الثامنة عشرة",
+    titleEn: "Article 18",
+    textEn: "If ownership of the establishment is transferred to a new owner, or its legal form changes by merger, division or otherwise, employment contracts shall remain in force in both cases, and service shall be deemed continuous.\n\nAs for workers' entitlements arising from the period preceding this change — wages, an end-of-service reward deemed due as at the date of transfer of ownership, or any other entitlements — the successor and the predecessor shall be jointly liable for them.\n\nWhere a sole proprietorship is transferred for any reason, the predecessor and successor may agree to transfer all prior worker entitlements to the new owner, with the worker's written consent. Should the worker not consent, they may request termination of their contract and receive their entitlements from the predecessor.",
+    text: "إذا انتقلت ملكية المنشأة لمالك جديد، أو طرأ تغيير على شكلها النظامي بالدمج أو التجزئة أو غير ذلك، تبقى عقود العمل نافذة في الحالين، وتُعد الخدمة مستمرة.\n\nأما بالنسبة لحقوق العمال الناشئة عن المدة السابقة لهذا التغيير من أجور، أو مكافأة نهاية خدمة مفترضة الاستحقاق بتاريخ انتقال الملكية، أو غير ذلك من حقوق؛ فيكون الخلف والسلف مسؤولين عنها بالتضامن.\n\nويجوز في حال انتقال المنشآت الفردية لأي سبب، اتفاق السلف والخلف على انتقال جميع حقوق العمال السابقة إلى المالك الجديد بموافقة العامل الخطية. وللعامل في حال عدم موافقته طلب إنهاء عقده وتسلّم مستحقاته من السلف."
+  },
+  "53": {
+    title: "المادة الثالثة والخمسون",
+    titleEn: "Article 53",
+    textEn: "Where a worker is subject to a probationary period, this must be expressly stated in the employment contract and its duration clearly specified, provided that the total duration does not, in any case, exceed one hundred and eighty (180) days.\n\nThe Regulations shall set out the related provisions, including leave that does not count toward the period.\n\nEither party may terminate the contract during this period.",
+    text: "إذا كان العامل خاضعاً للتجربة، وجب النص على ذلك صراحة في عقد العمل، وتحديد مدتها بوضوح، على ألا يزيد مجموع المدة في جميع الأحوال على (مائة وثمانين) يوماً.\n\nوتبيّن اللائحة الأحكام المتصلة بذلك، بما في ذلك ما يتعلق بالإجازات التي لا تدخل في حساب المدة.\n\nولكل من الطرفين الحق في إنهاء العقد خلال هذه المدة."
+  },
+  "57": {
+    title: "المادة السابعة والخمسون",
+    titleEn: "Article 57",
+    textEn: "Where the contract is for the performance of a specific task, it terminates upon completion of the agreed work.",
+    text: "إذا كان العقد من أجل القيام بعمل معيّن، فإنه ينتهي بإنجاز العمل المتفق عليه."
+  },
+  "74": {
+    title: "المادة الرابعة والسبعون",
+    titleEn: "Article 74",
+    textEn: "An employment contract terminates in any of the following cases:\n\n1 - Where both parties agree to terminate it, provided the worker's consent is in writing.\n\n2 - Where the term specified in the contract expires, unless the contract has been expressly renewed in accordance with this Law, in which case it continues to its term.\n\n3 - At the will of either party in contracts of unlimited duration, in accordance with Article (75) of this Law.\n\n3 (bis) - Resignation.\n\n4 - The worker reaching retirement age as prescribed by the Social Insurance Law, unless the parties agree to continue working beyond that age.\n\n5 - Force majeure.\n\n6 - Permanent closure of the establishment.\n\n7 - Discontinuation of the activity in which the worker is engaged, unless otherwise agreed.\n\n7 (bis) - Issuance of a final decision or judgment by the competent court terminating the worker's contract in any bankruptcy proceedings commenced under the Bankruptcy Law.\n\n8 - Any other case provided for by another law.",
+    text: "ينتهي عقد العمل في أي من الأحوال الآتية:\n\n١ - إذا اتفق الطرفان على إنهائه، بشرط أن تكون موافقة العامل كتابية.\n\n٢ - إذا انتهت المدة المحددة في العقد، ما لم يكن العقد قد تجدد صراحة وفق أحكام هذا النظام؛ فيستمر إلى أجله.\n\n٣ - بناءً على إرادة أحد الطرفين في العقود غير المحددة المدة، وفقاً لما ورد في المادة (٧٥) من هذا النظام.\n\n٣ (مكرر) - الاستقالة.\n\n٤ - بلوغ العامل سن التقاعد وفق ما تقضي به أحكام نظام التأمينات الاجتماعية، ما لم يتفق الطرفان على الاستمرار في العمل بعد هذه السن.\n\n٥ - القوة القاهرة.\n\n٦ - إغلاق المنشأة نهائياً.\n\n٧ - إنهاء النشاط الذي يعمل فيه العامل، ما لم يُتفق على غير ذلك.\n\n٧ (مكرر) - صدور قرار، أو حكم نهائي من المحكمة المختصة؛ بإنهاء عقد العامل في أي من إجراءات الإفلاس المفتتحة وفق نظام الإفلاس.\n\n٨ - أي حالة أخرى ينص عليها نظام آخر."
+  },
+  "75": {
+    title: "المادة الخامسة والسبعون",
+    titleEn: "Article 75",
+    textEn: "Where the contract is of unlimited duration and the wage is paid monthly, either party may terminate it on legitimate grounds, as follows:\n\n(a) Where termination is by the worker, they must give the employer written notice at least thirty (30) days before the date of termination.\n\n(b) Where termination is by the employer, they must give the worker written notice at least sixty (60) days before the date of termination.\n\nWhere the contract is of unlimited duration and the wage is not paid monthly, the terminating party must give the other party written notice at least thirty (30) days before the date of termination.",
+    text: "إذا كان العقد غير محدد المدة وكان الأجر يُدفع شهرياً، جاز لأي من طرفيه إنهاؤه بناءً على سبب مشروع، وفق ما يلي:\n\nأ - إذا كان الإنهاء من طرف العامل، فيجب عليه أن يوجّه إشعاراً كتابياً بذلك لصاحب العمل قبل (٣٠) يوماً على الأقل من تاريخ الإنهاء.\n\nب - إذا كان الإنهاء من طرف صاحب العمل، فيجب عليه أن يوجّه إشعاراً كتابياً بذلك للعامل قبل (٦٠) يوماً على الأقل من تاريخ الإنهاء.\n\nوإذا كان العقد غير محدد المدة وكان الأجر لا يُدفع شهرياً، فيجب أن يوجّه الطرف الذي سيُنهي العقد إشعاراً كتابياً بذلك للطرف الآخر قبل (٣٠) يوماً على الأقل من تاريخ الإنهاء."
+  },
+  "77": {
+    title: "المادة السابعة والسبعون",
+    titleEn: "Article 77",
+    textEn: "Unless the contract stipulates a specified compensation for its termination by either party on illegitimate grounds, the party harmed by the termination shall be entitled to compensation as follows:\n\n1 - The wage of fifteen (15) days for each year of the worker's service, where the contract is of unlimited duration.\n\n2 - The wage for the remaining period of the contract, where the contract is of limited duration.\n\n3 - The compensation referred to in paragraphs (1) and (2) of this Article shall not be less than the worker's wage for two months.",
+    text: "ما لم يتضمن العقد تعويضاً محدداً مقابل إنهائه من أحد الطرفين لسبب غير مشروع، يستحق الطرف المتضرر من إنهاء العقد تعويضاً على النحو الآتي:\n\n١ - أجر خمسة عشر يوماً عن كل سنة من سنوات خدمة العامل، إذا كان العقد غير محدد المدة.\n\n٢ - أجر المدة الباقية من العقد إذا كان العقد محدد المدة.\n\n٣ - يجب ألا يقل التعويض المشار إليه في الفقرتين (١) و(٢) من هذه المادة عن أجر العامل لمدة شهرين."
+  },
+  "79": {
+    title: "المادة التاسعة والسبعون",
+    titleEn: "Article 79",
+    textEn: "An employment contract does not lapse upon the death of the employer, unless the employer's person was a consideration in concluding the contract. However, it terminates upon the death of the worker or their incapacity to perform their work, as established by a medical certificate authenticated by the competent health authorities or by the physician designated by the employer.",
+    text: "لا ينقضي عقد العمل بوفاة صاحب العمل، ما لم تكن شخصيته قد رُوعيت في إبرام العقد، ولكنه ينتهي بوفاة العامل أو بعجزه عن أداء عمله، وذلك بموجب شهادة طبية معتمدة من الجهات الصحية المخوّلة، أو من الطبيب المخوّل الذي يعينه صاحب العمل."
+  },
+  "79m": {
+    title: "المادة التاسعة والسبعون (مكرر)",
+    titleEn: "Article 79 (bis)",
+    textEn: "1 - A submitted resignation request is deemed accepted if thirty (30) days pass without a response from the employer. The employer may defer acceptance of the resignation request for a period not exceeding sixty (60) days where the interest of work so requires, by prior written reasoned explanation given to the worker, provided the deferral occurs before the aforementioned thirty-day period expires.\n\n2 - The employment contract terminates by resignation from the date of the employer's acceptance, or upon the lapse of the thirty-day period without a response, or upon the expiry of the deferral period.\n\n3 - The worker may withdraw the resignation request within a period not exceeding seven (7) days from its submission, unless the employer accepts it before the withdrawal.\n\n4 - A deferred date may not be specified in the resignation request.",
+    text: "١ - يُعد طلب الاستقالة المقدم مقبولاً إذا مضى على تقديمه (٣٠) يوماً دون ردٍّ من صاحب العمل. ولصاحب العمل تأجيل قبول طلب الاستقالة مدة لا تزيد على (٦٠) يوماً إذا اقتضت مصلحة العمل ذلك، ووفق إيضاح مسبب مكتوب يُقدَّم للعامل، على أن يكون تأجيل القبول قبل انتهاء مدة الثلاثين يوماً المشار إليها.\n\n٢ - ينتهي عقد العمل بالاستقالة من تاريخ قبول صاحب العمل بها، أو مضي مدة الثلاثين يوماً دون رد، أو مرور مدة تأجيل القبول.\n\n٣ - للعامل العدول عن طلب الاستقالة خلال مدة لا تتجاوز (٧) أيام من تاريخ تقديمه، ما لم يقبلها صاحب العمل قبل العدول.\n\n٤ - لا يصح أن يُحدد في طلب الاستقالة تاريخ مؤجل لها."
+  },
+  "80": {
+    title: "المادة الثمانون",
+    titleEn: "Article 80",
+    textEn: "An employer may not terminate the contract without an end-of-service reward, notice, or compensation to the worker, except in the following cases, and provided the worker is given an opportunity to state their objections to the termination:\n\n1 - Where the worker assaults the employer, the responsible manager, or any of their superiors or subordinates during work or because of it.\n\n2 - Where the worker fails to perform their essential obligations under the employment contract, deliberately disobeys lawful instructions, or fails to observe the work and worker safety instructions posted in a visible place, despite written warning.\n\n3 - Where it is established that the worker has engaged in misconduct, or committed an act infringing honesty or integrity.\n\n4 - Where the worker commits — deliberately — any act or omission intended to cause material loss to the employer, provided the employer notifies the competent authorities of the incident within twenty-four hours of becoming aware of it.\n\n5 - Where it is established that the worker resorted to forgery to obtain the job.\n\n6 - Where the worker was engaged on probation.\n\n7 - Where the worker is absent without legitimate cause for more than thirty days during one contractual year, or more than fifteen consecutive days, provided the dismissal is preceded by a written warning from the employer after twenty days of absence in the first case, and ten days of absence in the second.\n\n8 - Where it is established that the worker exploited their position for unlawful personal gain.\n\n9 - Where it is established that the worker disclosed industrial or commercial secrets relating to the work in which they are engaged.",
+    text: "لا يجوز لصاحب العمل فسخ العقد دون مكافأة العامل، أو إشعاره، أو تعويضه؛ إلا في الحالات الآتية، وبشرط أن يتيح له الفرصة لكي يبدي أسباب معارضته للفسخ:\n\n١ - إذا وقع من العامل اعتداء على صاحب العمل أو المدير المسؤول أو أحد رؤسائه أو مرؤوسيه أثناء العمل أو بسببه.\n\n٢ - إذا لم يؤدِّ العامل التزاماته الجوهرية المترتبة على عقد العمل، أو لم يُطع الأوامر المشروعة عمداً، أو لم يراعِ التعليمات المُعلن عنها في مكان ظاهر الخاصة بسلامة العمل والعمال، رغم إنذاره كتابة.\n\n٣ - إذا ثبت اتباع العامل سلوكاً سيئاً، أو ارتكابه عملاً مخلاً بالشرف أو الأمانة.\n\n٤ - إذا وقع من العامل — عمداً — أيُّ فعل أو تقصير يُقصد به إلحاق خسارة مادية بصاحب العمل، بشرط أن يبلغ صاحب العمل الجهات المختصة بالحادث خلال أربع وعشرين ساعة من وقت علمه بوقوعه.\n\n٥ - إذا ثبت أن العامل لجأ إلى التزوير ليحصل على العمل.\n\n٦ - إذا كان العامل معيّناً تحت الاختبار.\n\n٧ - إذا تغيّب العامل دون سبب مشروع أكثر من ثلاثين يوماً خلال السنة العقدية الواحدة، أو أكثر من خمسة عشر يوماً متتالية، على أن يسبق الفصل إنذار كتابي من صاحب العمل للعامل بعد غيابه عشرين يوماً في الحالة الأولى، وانقطاعه عشرة أيام في الحالة الثانية.\n\n٨ - إذا ثبت أن العامل استغل مركزه الوظيفي بطريقة غير مشروعة للحصول على نتائج ومكاسب شخصية.\n\n٩ - إذا ثبت أن العامل أفشى الأسرار الصناعية أو التجارية الخاصة بالعمل الذي يعمل فيه."
+  },
+  "81": {
+    title: "المادة الحادية والثمانون",
+    titleEn: "Article 81",
+    textEn: "A worker may leave work without notice, while retaining all their statutory entitlements, in any of the following cases:\n\n1 - Where the employer fails to fulfil their essential contractual or statutory obligations toward the worker.\n\n2 - Where it is established that the employer or their representative deceived the worker at the time of contracting as to the terms and conditions of work.\n\n3 - Where the employer assigns the worker, without their consent, to work materially different from the agreed work, contrary to Article Sixty of this Law.\n\n4 - Where the employer, a member of their family, or the responsible manager commits a violent assault or conduct offending decency against the worker or a member of their family.\n\n5 - Where there is a serious hazard in the establishment threatening the worker's safety or health, provided the employer was aware of it and took no measures indicating its removal.\n\n6 - Where the employer or their representative, through their conduct — particularly unjust treatment or breach of the contract terms — drove the worker to appear to be the one terminating the contract.",
+    text: "يحق للعامل أن يترك العمل دون إشعار، مع احتفاظه بحقوقه النظامية كلها، وذلك في أي من الحالات الآتية:\n\n١ - إذا لم يقم صاحب العمل بالوفاء بالتزاماته العقدية أو النظامية الجوهرية إزاء العامل.\n\n٢ - إذا ثبت أن صاحب العمل أو من يمثله قد أدخل عليه الغش وقت التعاقد فيما يتعلق بشروط العمل وظروفه.\n\n٣ - إذا كلّفه صاحب العمل دون رضاه بعمل يختلف جوهرياً عن العمل المتفق عليه، وخلافاً لما تقرره المادة الستون من هذا النظام.\n\n٤ - إذا وقع من صاحب العمل أو من أحد أفراد أسرته أو المدير المسؤول اعتداء اتّسم بالعنف، أو سلوك مخل بالآداب نحو العامل أو أحد أفراد أسرته.\n\n٥ - إذا كان في المنشأة خطر جسيم يهدد سلامة العامل أو صحته، بشرط أن يكون صاحب العمل قد علم بوجوده ولم يتخذ من الإجراءات ما يدل على إزالته.\n\n٦ - إذا كان صاحب العمل أو من يمثله قد دفع العامل بتصرفاته — وعلى الأخص بمعاملته الجائرة أو بمخالفته شروط العقد — إلى أن يكون العامل في الظاهر هو الذي أنهى العقد."
+  },
+  "85": {
+    title: "المادة الخامسة والثمانون",
+    titleEn: "Article 85",
+    textEn: "Where the employment relationship terminates due to the worker's resignation, the worker is entitled in this case to one third of the reward after a continuous service of not less than two years and not more than five years; to two thirds of it where their service exceeds five continuous years but has not reached ten years; and to the full reward where their service reaches ten years or more.",
+    text: "إذا كان انتهاء علاقة العمل بسبب استقالة العامل، يستحق في هذه الحالة ثلث المكافأة بعد خدمة لا تقل مدتها عن سنتين متتاليتين ولا تزيد على خمس سنوات، ويستحق ثلثيها إذا زادت مدة خدمته على خمس سنوات متتالية ولم تبلغ عشر سنوات، ويستحق المكافأة كاملة إذا بلغت مدة خدمته عشر سنوات فأكثر."
+  },
+  "87": {
+    title: "المادة السابعة والثمانون",
+    titleEn: "Article 87",
+    textEn: "By way of exception to Article (Eighty-Five) of this Law, the full reward is due where the worker leaves work as a result of force majeure beyond their control; a female worker is likewise entitled to it where she terminates the contract within six months from the date of her marriage contract, or three months from the date of her childbirth.",
+    text: "استثناءً مما ورد في المادة (الخامسة والثمانين) من هذا النظام، تستحق المكافأة كاملة في حالة ترك العامل العمل نتيجة لقوة قاهرة خارجة عن إرادته، كما تستحقها العاملة إذا أنهت العقد خلال ستة أشهر من تاريخ عقد زواجها، أو ثلاثة أشهر من تاريخ وضعها."
+  },
+};
+
 const articleRules = {
   "18":  { entitled: true,  validParty: "employee", validContractType: "both" },      // انتقال ملكية المنشأة - رفض العامل الانتقال، مكافأة كاملة
   "53":  { entitled: false, validParty: "both", validContractType: "both" },      // فترة التجربة - لا مكافأة لأي طرف
@@ -1308,6 +1634,72 @@ function updateArticleOptionsByContractType() {
 document.getElementById('contract_type').addEventListener('change', updateArticleOptionsByContractType);
 updateArticleOptionsByContractType();
 
+// ─── Guide panel (right-hand side) ───────────────────────────────────
+// Explains WHICH statutory calculation rule applies to the currently
+// selected combination, and shows the chosen article's verbatim text.
+// It deliberately mirrors only the rule selection logic (article +
+// terminating party), NOT the computed outcome: a resignation with under
+// two years of service still displays Article 85 as the governing rule,
+// because that IS the rule - the resulting zero is a consequence of the
+// tier table, and the left-hand results panel already reports it. Mixing
+// the two would turn this panel into a duplicate of the result instead of
+// a reference explaining it.
+function updateGuidePanel() {
+  const article = document.getElementById('termination_reason').value;
+  const party = document.getElementById('termination_party').value;
+
+  const card84 = document.getElementById('rule_84');
+  const card85 = document.getElementById('rule_85');
+  const cardNone = document.getElementById('rule_none');
+
+  let mode; // "both" | "84" | "85" | "none"
+  if (!article) {
+    mode = "both";
+  } else {
+    const rule = articleRules[article];
+    if (rule && rule.entitled === false) {
+      mode = "none";
+    } else if (
+      article === "85" || article === "79m" ||
+      ((article === "75" || article === "77") && party === "employee")
+    ) {
+      mode = "85";
+    } else if ((article === "75" || article === "77") && !party) {
+      // Article chosen but party not yet picked - outcome still undetermined
+      mode = "both";
+    } else {
+      mode = "84";
+    }
+  }
+
+  card84.style.display   = (mode === "both" || mode === "84") ? "block" : "none";
+  card85.style.display   = (mode === "both" || mode === "85") ? "block" : "none";
+  cardNone.style.display = (mode === "none") ? "block" : "none";
+
+  card84.classList.toggle("is-active", mode === "84");
+  card85.classList.toggle("is-active", mode === "85");
+
+  // Article text
+  const box = document.getElementById('atb_content');
+  const tr = t[lang];
+  if (article && articleTexts[article]) {
+    const a = articleTexts[article];
+    const bodyTxt = (lang === "ar" || !a.textEn) ? a.text : a.textEn;
+    const paras = bodyTxt.split("\n\n")
+      .map(s => `<p style="margin:0 0 9px;">${s}</p>`).join("");
+    box.innerHTML =
+      `<span class="atb-title">${lang === "ar" ? a.title : (a.titleEn || a.title)}</span>` +
+      `<div class="atb-text">${paras}</div>`;
+  } else {
+    box.innerHTML = `<p class="atb-empty">${tr.atb_empty}</p>`;
+  }
+}
+
+['termination_reason', 'termination_party', 'contract_type'].forEach(id => {
+  document.getElementById(id).addEventListener('change', updateGuidePanel);
+});
+updateGuidePanel();
+
 // Toggle between the two salary-entry modes: GOSI-app figures (recommended -
 // two aggregate numbers already correctly split by the official system) vs
 // manual detailed breakdown (fallback for anyone without app access), and
@@ -1345,6 +1737,12 @@ function toggleLang() {
   const tr = t[lang];
 
   document.getElementById("title").innerText = tr.title;
+  ["guide_title","rule_84_title","rule_84_text","rule_85_title","rule_85_text",
+   "tier_1_label","tier_1_val","tier_2_label","tier_2_val","tier_3_label","tier_3_val",
+   "tier_4_label","tier_4_val","rule_none_title","rule_none_text","atb_label",
+   "lateTotal_label","debt_deduct_label"]
+    .forEach(k => { const el = document.getElementById(k); if (el) el.innerText = tr[k]; });
+  updateGuidePanel();
   document.getElementById("result_empty_text").innerText = tr.result_empty_text;
   document.getElementById("hero_currency").innerText = tr.currency;
   document.getElementById("years_label").innerText = tr.years_label;
@@ -1469,6 +1867,12 @@ function toggleLang() {
   document.getElementById("section_extras").innerText = tr.section_extras;
 
   document.body.dir = lang === "ar" ? "rtl" : "ltr";
+
+  // Re-render the report in the new language if one has already been
+  // generated, so the results panel and the printed report stay consistent
+  // with the interface language instead of remaining in the language that
+  // happened to be active when Calculate was pressed.
+  if (lastReportData) generateReport(lastReportData);
 
   clearError();
 }
@@ -1831,6 +2235,25 @@ function calculate() {
   document.getElementById("compensation77_card").innerText = compensation77.toFixed(2);
   document.getElementById("final_month_salary_card").innerText = finalMonthSalary.toFixed(2);
   document.getElementById("notice_pay_card").innerText = noticePay.toFixed(2);
+  document.getElementById("lateTotal_card").innerText = lateTotal.toFixed(2);
+  document.getElementById("debt_deduct_card").innerText = "-" + debtAmount.toFixed(2);
+
+  // Show only the lines that actually took part in this calculation. A
+  // resignation should not display an Article 77 compensation line reading
+  // zero - a line that cannot apply to the selected case is noise, and
+  // worse, it implies the person forfeited something they were never
+  // eligible for. Same rule the printed report already follows.
+  const rowVis = {
+    row_leave:       leaveReward > 0,
+    row_late:        lateMonths > 0,
+    row_comp77:      compensation77 > 0,
+    row_final_month: finalMonthGross > 0,
+    row_notice:      noticePay > 0,
+    row_debt:        hasDebt && debtAmount > 0,
+  };
+  Object.entries(rowVis).forEach(([id, show]) => {
+    document.getElementById(id).style.display = show ? "flex" : "none";
+  });
 
   const effectivelyEntitled = baseRewardEntitled && !(applyResignationTiering && resignationTier(years) === 0);
 
@@ -1862,6 +2285,12 @@ function calculate() {
   });
 }
 
+// Holds the last computed figures so the report can be re-rendered in the
+// other language on demand. Without this the report stays frozen in
+// whichever language was active at calculation time, because generateReport
+// only ever ran once - from calculate().
+let lastReportData = null;
+
 function formatDate(d) {
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -1870,9 +2299,26 @@ function formatDate(d) {
 }
 
 function generateReport(d) {
+  lastReportData = d;
   const box = document.getElementById("report_box");
   box.style.display = "block";
   const tr = t[lang];
+
+  // Which statutory calculation rule governed this result. Mirrors the
+  // guide panel's logic exactly, so the printed report states the same
+  // basis the person saw on screen while filling the form.
+  const ruleRes = articleRules[d.article];
+  let calcRuleText;
+  if (ruleRes && ruleRes.entitled === false) {
+    calcRuleText = tr.calc_rule_none;
+  } else if (
+    d.article === "85" || d.article === "79m" ||
+    ((d.article === "75" || d.article === "77") && d.party === "employee")
+  ) {
+    calcRuleText = tr.calc_rule_85;
+  } else {
+    calcRuleText = tr.calc_rule_84;
+  }
 
   const nationalityText = d.nationality === "saudi" ? tr.saudi : tr.non_saudi;
   const partyText = d.party === "company" ? tr.company : tr.employee;
@@ -1952,6 +2398,7 @@ function generateReport(d) {
       <div class="intro-item"><span>${tr.party_label}</span><b>${partyText}</b></div>
       <div class="intro-item"><span>${tr.contract_label}</span><b>${contractTypeText}</b></div>
       <div class="intro-item"><span>${tr.article_report_label}</span><b>${d.article === "79m" ? tr.article_79m_word : (tr.article_word + " " + d.article)}</b></div>
+      <div class="intro-item"><span>${tr.calc_rule_label}</span><b>${calcRuleText}</b></div>
       <div class="intro-item"><span>${tr.salary_label}</span><b>${d.rewardWage.toFixed(2)} ${tr.currency}</b></div>
       <div class="intro-item"><span>${tr.insurance_wage_report_label}</span><b>${d.insuranceWage.toFixed(2)} ${tr.currency}</b></div>
       <div class="intro-item"><span>${tr.insurance_rate_label}</span><b>${(d.rate * 100).toFixed(2)}%</b></div>
@@ -1987,6 +2434,13 @@ function generateReport(d) {
       <span>${tr.net_final_label}</span>
       <strong>${d.total.toFixed(2)} ${tr.currency}</strong>
     </div>
+
+    ${articleTexts[d.article] ? `
+    <div class="report-article-text">
+      <span class="rat-head">${tr.report_article_text_title}</span>
+      <span class="rat-title">${lang === "ar" ? articleTexts[d.article].title : (articleTexts[d.article].titleEn || articleTexts[d.article].title)}</span>
+      ${((lang === "ar" || !articleTexts[d.article].textEn) ? articleTexts[d.article].text : articleTexts[d.article].textEn).split("\n\n").map(s => `<p>${s}</p>`).join("")}
+    </div>` : ""}
 
     <p class="report-footer-note">${tr.rights} · ${stamp}</p>
   `;
@@ -2088,6 +2542,10 @@ function printReport() {
         .report-net-box strong { color: var(--gold-soft); font-size: 23px; font-weight: 700; }
 
         .report-77-note { margin: 12px 0 0; padding: 8px 12px; font-size: 11px; line-height: 1.6; color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent); border-radius: 8px; }
+        .report-article-text { margin-top: 16px; padding: 12px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; page-break-inside: avoid; }
+        .report-article-text .rat-head { display: block; font-size: 11px; font-weight: 600; color: var(--ink-soft); margin-bottom: 5px; }
+        .report-article-text .rat-title { display: block; font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+        .report-article-text p { margin: 0 0 7px; font-size: 12.5px; line-height: 1.85; color: var(--ink); }
         .report-footer-note { margin: 14px 0 0; font-size: 11.5px; color: var(--ink-soft); text-align: center; }
       </style>
     </head>
