@@ -794,27 +794,6 @@
           <label id="other_allowances_label">بدلات ثابتة أخرى:</label>
           <input type="number" id="other_allowances" min="0">
         </div>
-        <div>
-          <label id="has_commission_label">هل لديك نسبة عمولة بعقدك؟</label>
-          <select id="has_commission">
-            <option value="no">لا</option>
-            <option value="yes">نعم</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field-group" id="commission_fields" style="display:none;">
-        <div>
-          <label id="commission_avg_label">متوسط العمولة الشهرية (آخر 12 شهر):</label>
-          <input type="number" id="commission_avg" min="0">
-        </div>
-        <div>
-          <label id="commission_excluded_label">هل ينص عقدك صراحة على استثناء العمولة من حساب المكافأة (المادة 86)؟</label>
-          <select id="commission_excluded_m86">
-            <option value="no">لا (الافتراضي - تدخل بالحساب)</option>
-            <option value="yes">نعم، مُستثناة بنص العقد</option>
-          </select>
-        </div>
       </div>
 
       <div class="group-heading"><span class="step-badge">02</span><span id="section_duration">مدة الخدمة</span></div>
@@ -1077,15 +1056,8 @@ const t = {
     housing_allowance_label: "بدل السكن:",
     transport_allowance_label: "بدل النقل:",
     other_allowances_label: "بدلات ثابتة أخرى:",
-    has_commission_label: "هل لديك نسبة عمولة بعقدك؟",
-    commission_avg_label: "متوسط العمولة الشهرية (آخر 12 شهر):",
-    commission_excluded_label: "هل ينص عقدك صراحة على استثناء العمولة من حساب المكافأة (المادة 86)؟",
     wage_mode_gosi_opt: "من تطبيق التأمينات (موصى به)",
     wage_mode_manual_opt: "إدخال يدوي تفصيلي",
-    commission_no: "لا",
-    commission_yes: "نعم",
-    commission_excluded_no: "لا (الافتراضي - تدخل بالحساب)",
-    commission_excluded_yes: "نعم، مُستثناة بنص العقد",
     error_wage_fields: "الرجاء تعبئة بيانات الراتب المطلوبة",
     leave_label: "رصيد الاجازات بالايام:",
     leaveReward_label: "تعويض رصيد الإجازات",
@@ -1226,15 +1198,8 @@ const t = {
     housing_allowance_label: "Housing Allowance:",
     transport_allowance_label: "Transport Allowance:",
     other_allowances_label: "Other Fixed Allowances:",
-    has_commission_label: "Do you have a commission clause in your contract?",
-    commission_avg_label: "Average Monthly Commission (last 12 months):",
-    commission_excluded_label: "Does your contract explicitly exclude commission from the reward calculation (Article 86)?",
     wage_mode_gosi_opt: "From GOSI app (recommended)",
     wage_mode_manual_opt: "Detailed manual entry",
-    commission_no: "No",
-    commission_yes: "Yes",
-    commission_excluded_no: "No (default - included)",
-    commission_excluded_yes: "Yes, excluded per contract",
     error_wage_fields: "Please fill in the required salary fields",
     leave_label: "Leave Balance (Days):",
     leaveReward_label: "Leave Balance Compensation",
@@ -1336,6 +1301,43 @@ const t = {
 // version (180-day cap), not the older 90-day wording still circulating
 // on some sites. Displayed read-only in the guide panel so the person can
 // read the actual provision behind whatever the calculator computed.
+// GOSI caps the contribution-subject wage at SAR 45,000/month: anything
+// above it is disregarded entirely when computing contributions (GOSI's own
+// worked example: a subject wage of 60,000 is assessed on 45,000 only).
+// Applied to the insurance base alone - the reward base is uncapped, since
+// Article 84 sets no ceiling on the wage used for end-of-service reward.
+// GOSI assesses each contribution branch separately and rounds each to the
+// nearest halalah before they are summed - confirmed against the Taminaty
+// app, which for a 6,125.00 subject wage shows 45.94 for unemployment
+// insurance (the exact figure is 45.9375, rounded up) alongside 551.25 for
+// pensions. Multiplying by a single combined rate instead diverges by one
+// halalah in roughly a quarter of real (non-round) wages, so the branches
+// are computed and rounded independently here.
+// The 2% occupational-hazards branch is excluded: the employer bears it in
+// full and it is never deducted from the worker.
+const UNEMPLOYMENT_RATE = 0.0075;
+
+function insuranceDeduction(base, totalRate) {
+  if (!base || !totalRate) return 0;
+  // Any rate at or below the unemployment share cannot be split meaningfully
+  const unemployment = Math.min(UNEMPLOYMENT_RATE, totalRate);
+  const pension = totalRate - unemployment;
+  return round2(base * pension) + round2(base * unemployment);
+}
+
+function round2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+
+// Currency display: two decimals with thousands separators, using Latin
+// digits in both languages so figures stay comparable against payslips,
+// GOSI statements and the Ministry of Justice calculator - all of which
+// present amounts this way.
+function fmt(n) {
+  const v = Number(n) || 0;
+  return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+const GOSI_WAGE_CAP = 45000;
+
 const articleTexts = {
   "18": {
     title: "المادة الثامنة عشرة",
@@ -1703,20 +1705,16 @@ updateGuidePanel();
 // Toggle between the two salary-entry modes: GOSI-app figures (recommended -
 // two aggregate numbers already correctly split by the official system) vs
 // manual detailed breakdown (fallback for anyone without app access), and
-// show the commission sub-fields only when relevant (manual mode + has
-// commission = yes). GOSI-mode figures already have commission baked in by
-// GOSI's own rules, so no separate commission question is needed there.
+// Toggle between the two wage-entry modes: GOSI figures vs. itemised manual
+// entry.
 function updateWageModeVisibility() {
   const mode = document.getElementById('wage_input_mode').value || 'gosi';
   const isGosi = mode === 'gosi';
   document.getElementById('wage_gosi_fields').style.display = isGosi ? 'grid' : 'none';
   document.getElementById('wage_manual_fields').style.display = isGosi ? 'none' : 'grid';
 
-  const hasCommission = document.getElementById('has_commission').value === 'yes';
-  document.getElementById('commission_fields').style.display = (!isGosi && hasCommission) ? 'grid' : 'none';
 }
 document.getElementById('wage_input_mode').addEventListener('change', updateWageModeVisibility);
-document.getElementById('has_commission').addEventListener('change', updateWageModeVisibility);
 updateWageModeVisibility();
 
 // Show/hide the debt amount field based on the has_debt selection.
@@ -1776,21 +1774,12 @@ function toggleLang() {
   document.getElementById("housing_allowance_label").innerText = tr.housing_allowance_label;
   document.getElementById("transport_allowance_label").innerText = tr.transport_allowance_label;
   document.getElementById("other_allowances_label").innerText = tr.other_allowances_label;
-  document.getElementById("has_commission_label").innerText = tr.has_commission_label;
-  document.getElementById("commission_avg_label").innerText = tr.commission_avg_label;
-  document.getElementById("commission_excluded_label").innerText = tr.commission_excluded_label;
 
   const wageModeSelect = document.getElementById("wage_input_mode");
   wageModeSelect.options[0].text = tr.wage_mode_gosi_opt;
   wageModeSelect.options[1].text = tr.wage_mode_manual_opt;
 
-  const hasCommissionSelect = document.getElementById("has_commission");
-  hasCommissionSelect.options[0].text = tr.commission_no;
-  hasCommissionSelect.options[1].text = tr.commission_yes;
 
-  const commissionExcludedSelect = document.getElementById("commission_excluded_m86");
-  commissionExcludedSelect.options[0].text = tr.commission_excluded_no;
-  commissionExcludedSelect.options[1].text = tr.commission_excluded_yes;
   document.getElementById("leave_label").innerText = tr.leave_label;
   document.getElementById("late_label").innerText = tr.late_label;
   document.getElementById("notice_label").innerText = tr.notice_label;
@@ -1910,7 +1899,6 @@ function calculate() {
   // than derived from one flat number. ----
   const wageMode = document.getElementById('wage_input_mode').value || 'gosi';
   let rewardWage = 0, insuranceWage = 0;
-  let hasCommission = false, commissionAvg = 0, commissionExcludedM86 = false;
   let basicSalary = 0, housingAllowance = 0, transportAllowance = 0, otherAllowances = 0;
   let totalWageGosi = 0, subjectWageGosi = 0;
 
@@ -1926,35 +1914,27 @@ function calculate() {
       return;
     }
     rewardWage = totalWageGosi;
-    insuranceWage = subjectWageGosi;
+    insuranceWage = Math.min(subjectWageGosi, GOSI_WAGE_CAP);
   } else {
     basicSalary = +document.getElementById('basic_salary').value || 0;
     housingAllowance = +document.getElementById('housing_allowance').value || 0;
     transportAllowance = +document.getElementById('transport_allowance').value || 0;
     otherAllowances = +document.getElementById('other_allowances').value || 0;
-    hasCommission = document.getElementById('has_commission').value === 'yes';
-    commissionAvg = hasCommission ? (+document.getElementById('commission_avg').value || 0) : 0;
-    commissionExcludedM86 = document.getElementById('commission_excluded_m86').value === 'yes';
 
     if (!basicSalary) {
       showError(tr.error_wage_fields);
       return;
     }
-    if (basicSalary <= 0 || housingAllowance < 0 || transportAllowance < 0 || otherAllowances < 0 || commissionAvg < 0) {
+    if (basicSalary <= 0 || housingAllowance < 0 || transportAllowance < 0 || otherAllowances < 0) {
       showError(tr.error_negative_values);
       return;
     }
 
-    // Reward base = the full actual wage: basic + every fixed allowance +
-    // commission, UNLESS the contract explicitly excludes commission per
-    // Article 86 (opt-out, not the default).
-    rewardWage = basicSalary + housingAllowance + transportAllowance + otherAllowances
-               + (commissionExcludedM86 ? 0 : commissionAvg);
-    // Insurance base (GOSI): basic + housing + commission only - transport and
-    // other allowances never enter it, and commission enters it regardless of
-    // any Article 86 exclusion (that article only concerns the reward base -
-    // it has no bearing on the separate GOSI subscription-wage rules).
-    insuranceWage = basicSalary + housingAllowance + commissionAvg;
+    // Reward base = the full actual wage: basic + every fixed allowance.
+    rewardWage = basicSalary + housingAllowance + transportAllowance + otherAllowances;
+    // Insurance base (GOSI): basic + housing only - transport and other
+    // allowances never enter it - and capped at the statutory ceiling.
+    insuranceWage = Math.min(basicSalary + housingAllowance, GOSI_WAGE_CAP);
   }
 
   const leave = +document.getElementById('leave_balance').value || 0;
@@ -2065,7 +2045,7 @@ function calculate() {
   // Net salary shown for reference: the full reward wage minus the *actual*
   // insurance amount withheld (which is based only on the narrower insurance
   // wage, not the full amount) - this matches what really lands in the bank.
-  const netSalary = rewardWage - (insuranceWage * rate);
+  const netSalary = rewardWage - insuranceDeduction(insuranceWage, rate);
 
   // Dual insurance-system flag: selecting exactly 9.75% is the project's
   // agreed signal for "registered under the OLD fixed-rate system" (flat
@@ -2100,10 +2080,25 @@ function calculate() {
     if (applyResignationTiering) {
       reward = reward * resignationTier(years);
     }
+    reward = round2(reward);
   }
 
-  const leaveReward = leave * (rewardWage / dailyDivisor);
-  const lateGross = lateMonths * rewardWage;
+  // Leave balance uses its own daily rate under the calendar-month method:
+  // the annual wage spread over the actual days of a year (wage × 12 ÷ 365),
+  // which is the convention applied to leave compensation specifically. The
+  // fixed-month method keeps the flat ÷30 rate used by the Ministry of
+  // Justice calculator, and remains the default.
+  const leaveDailyRate = (dailyCalcMethod === 'calendar')
+    ? (rewardWage * 12) / 365
+    : (rewardWage / 30);
+  // Every payable amount is rounded to the halalah as it is produced, before
+  // it enters the total: these are sums that will actually be disbursed, and
+  // money is not paid in fractions of a halalah - so the rounded figure IS
+  // the real one. It also guarantees the displayed line items add up exactly
+  // to the shown total, which matters on a report someone prints and hands
+  // over. GOSI applies the same principle to its own contribution branches.
+  const leaveReward = round2(leave * leaveDailyRate);
+  const lateGross = round2(lateMonths * rewardWage);
 
   // Late-salary insurance deduction. Old system (or no late months): flat
   // rate, same as always - netSalary above is already wage-base-aware
@@ -2125,15 +2120,15 @@ function calculate() {
     let dedTotal = 0;
     for (let i = 0; i < wholeMonths; i++) {
       const monthDate = new Date(ey, em - 1 - (i + 1), 1);
-      dedTotal += insuranceWage * getInsuranceRate(monthDate);
+      dedTotal += insuranceDeduction(insuranceWage, getInsuranceRate(monthDate));
     }
     if (fraction > 0) {
       const monthDate = new Date(ey, em - 1 - (wholeMonths + 1), 1);
-      dedTotal += insuranceWage * fraction * getInsuranceRate(monthDate);
+      dedTotal += insuranceDeduction(insuranceWage * fraction, getInsuranceRate(monthDate));
     }
     lateInsuranceDeduction = dedTotal;
   }
-  const lateTotal = lateGross - lateInsuranceDeduction;
+  const lateTotal = round2(lateGross - lateInsuranceDeduction);
 
   // Final partial-month salary: wage owed for the days actually worked in the
   // last incomplete month, separate from the end-of-service reward. Only added
@@ -2146,22 +2141,22 @@ function calculate() {
   const finalPeriodStart = new Date(ey, em - 1, 1);
   const finalPeriodDays = ed; // day-of-month of the end date = days from the 1st through the last working day, inclusive
 
-  const finalMonthGross = (finalMonthPaid === "no") ? finalPeriodDays * (rewardWage / dailyDivisor) : 0;
+  const finalMonthGross = (finalMonthPaid === "no") ? round2(finalPeriodDays * (rewardWage / dailyDivisor)) : 0;
   // The insurance deduction applies only to the narrower insurance-wage
   // portion of those same days - not the full reward-wage gross above.
-  const finalMonthInsuranceBasis = (finalMonthPaid === "no") ? finalPeriodDays * (insuranceWage / dailyDivisor) : 0;
+  const finalMonthInsuranceBasis = (finalMonthPaid === "no") ? round2(finalPeriodDays * (insuranceWage / dailyDivisor)) : 0;
   // The final partial period always falls entirely within a single calendar
   // month, so under the new system its correct rate is simply whichever one
   // applies to that month (no internal splitting needed, unlike late salary).
   // Non-Saudi stays at 0 regardless, same as the flat `rate` variable.
   const finalMonthEffectiveRate = (nationality !== "saudi" || isOldInsuranceSystem) ? rate : getInsuranceRate(finalPeriodStart);
-  const finalMonthInsuranceDeduction = finalMonthInsuranceBasis * finalMonthEffectiveRate;
-  const finalMonthSalary = finalMonthGross - finalMonthInsuranceDeduction;
+  const finalMonthInsuranceDeduction = insuranceDeduction(finalMonthInsuranceBasis, finalMonthEffectiveRate);
+  const finalMonthSalary = round2(finalMonthGross - finalMonthInsuranceDeduction);
 
   // Notice pay: optional field left to the person's actual situation. If notice
   // was not given despite the agreed/legal notice period, the wage for that
   // period is owed. Left blank ("") means not applicable / not answered - no line added.
-  const noticePay = (noticeStatus === "no") ? noticeDays * (rewardWage / dailyDivisor) : 0;
+  const noticePay = (noticeStatus === "no") ? round2(noticeDays * (rewardWage / dailyDivisor)) : 0;
 
   // Article 77 compensation: independent of, and additional to, the standard
   // reward. Applies only when the company terminated without legitimate cause
@@ -2196,7 +2191,7 @@ function calculate() {
       // basis as the reward itself - Article 77 is a نظام العمل mechanism,
       // entirely independent from GOSI's narrower insurance wage.
       if (contractType === "غير محدد") {
-        compensation77 = (totalMonthsDecimal / 12) * (rewardWage / 2);
+        compensation77 = round2((totalMonthsDecimal / 12) * (rewardWage / 2));
       } else {
         const oed = +document.getElementById('orig_end_day').value;
         const oem = +document.getElementById('orig_end_month').value;
@@ -2217,26 +2212,26 @@ function calculate() {
           (origEndDate.getDate() - endDate.getDate()) / 30,
           0
         );
-        compensation77 = remainingMonths * rewardWage;
+        compensation77 = round2(remainingMonths * rewardWage);
       }
       compensation77 = Math.max(compensation77, rewardWage * 2); // minimum 2 months' wage
     }
   }
 
-  const total = reward + leaveReward + lateTotal + finalMonthSalary + compensation77 + noticePay - debtAmount;
+  const total = round2(reward + leaveReward + lateTotal + finalMonthSalary + compensation77 + noticePay - debtAmount);
 
   document.getElementById("years_card").innerText = years;
   document.getElementById("months_card").innerText = months;
   document.getElementById("days_card").innerText = days;
-  document.getElementById("salary_card").innerText = rewardWage.toFixed(2);
+  document.getElementById("salary_card").innerText = fmt(rewardWage);
   document.getElementById("insurance_rate_card").innerText = (rate * 100).toFixed(2) + "%";
-  document.getElementById("net_salary_card").innerText = netSalary.toFixed(2);
-  document.getElementById("leaveReward_card").innerText = leaveReward.toFixed(2);
-  document.getElementById("compensation77_card").innerText = compensation77.toFixed(2);
-  document.getElementById("final_month_salary_card").innerText = finalMonthSalary.toFixed(2);
-  document.getElementById("notice_pay_card").innerText = noticePay.toFixed(2);
-  document.getElementById("lateTotal_card").innerText = lateTotal.toFixed(2);
-  document.getElementById("debt_deduct_card").innerText = "-" + debtAmount.toFixed(2);
+  document.getElementById("net_salary_card").innerText = fmt(netSalary);
+  document.getElementById("leaveReward_card").innerText = fmt(leaveReward);
+  document.getElementById("compensation77_card").innerText = fmt(compensation77);
+  document.getElementById("final_month_salary_card").innerText = fmt(finalMonthSalary);
+  document.getElementById("notice_pay_card").innerText = fmt(noticePay);
+  document.getElementById("lateTotal_card").innerText = fmt(lateTotal);
+  document.getElementById("debt_deduct_card").innerText = "-" + fmt(debtAmount);
 
   // Show only the lines that actually took part in this calculation. A
   // resignation should not display an Article 77 compensation line reading
@@ -2260,13 +2255,13 @@ function calculate() {
   const rewardCardEl = document.getElementById("service_reward_card");
   if (effectivelyEntitled) {
     rewardCardEl.classList.remove("warn");
-    rewardCardEl.innerText = reward.toFixed(2);
+    rewardCardEl.innerText = fmt(reward);
   } else {
     rewardCardEl.classList.add("warn");
     rewardCardEl.innerText = tr.not_entitled;
   }
 
-  document.getElementById("total_card").innerText = total.toFixed(2);
+  document.getElementById("total_card").innerText = fmt(total);
 
   document.getElementById("result_empty").style.display = "none";
   document.getElementById("result_content").style.display = "block";
@@ -2274,7 +2269,7 @@ function calculate() {
   generateReport({
     years, months, days, salary: rewardWage, rewardWage, insuranceWage, netSalary, rate, party, nationality, article, contractType,
     wageMode, basicSalary, housingAllowance, transportAllowance, otherAllowances,
-    hasCommission, commissionAvg, commissionExcludedM86, totalWageGosi, subjectWageGosi,
+    totalWageGosi, subjectWageGosi,
     leave, lateMonths, noticeStatus, noticeDays, article77CompType, origEndDateForReport,
     entitled: effectivelyEntitled, reward, leaveReward,
     lateGross, lateInsuranceDeduction, lateTotal,
@@ -2323,7 +2318,7 @@ function generateReport(d) {
   const nationalityText = d.nationality === "saudi" ? tr.saudi : tr.non_saudi;
   const partyText = d.party === "company" ? tr.company : tr.employee;
   const contractTypeText = d.contractType === "محدد" ? tr.contract_limited : tr.contract_unlimited;
-  const rewardText = d.entitled ? d.reward.toFixed(2) : tr.not_entitled;
+  const rewardText = d.entitled ? fmt(d.reward) : tr.not_entitled;
   const durationText = tr.duration_template.replace('{y}', d.years).replace('{m}', d.months).replace('{d}', d.days);
 
   const lateMonthsItem = d.lateMonths > 0
@@ -2344,34 +2339,38 @@ function generateReport(d) {
   const finalPeriodText = `${tr.period_from} ${formatDate(d.finalPeriodStart)} ${tr.period_to} ${formatDate(d.endDate)}`;
 
   const now = new Date();
-  const stamp = now.toLocaleString(lang === "ar" ? "ar-SA" : "en-GB", {
-    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
-    numberingSystem: "latn"
-  });
+  // Report timestamp. In Arabic the ar-SA locale yields a Hijri date only,
+  // which is hard to reconcile with payroll systems and official letters that
+  // run on the Gregorian calendar - so both are shown side by side.
+  const dOpts = { year: "numeric", month: "2-digit", day: "2-digit", numberingSystem: "latn" };
+  const tOpts = { hour: "2-digit", minute: "2-digit", numberingSystem: "latn" };
+  const stamp = (lang === "ar")
+    ? `${now.toLocaleDateString("ar-SA", dOpts)} · ${now.toLocaleDateString("en-GB", dOpts)} م · ${now.toLocaleTimeString("ar-SA", tOpts)}`
+    : `${now.toLocaleDateString("en-GB", dOpts)} · ${now.toLocaleDateString("ar-SA", dOpts)} AH · ${now.toLocaleTimeString("en-GB", tOpts)}`;
 
   // ---- Dues rows ----
   const finalMonthGrossRow = d.finalMonthGross > 0
-    ? `<tr><th>${tr.final_month_gross_label}<span class="row-note">${finalPeriodText}</span></th><td>${d.finalMonthGross.toFixed(2)}</td></tr>`
+    ? `<tr><th>${tr.final_month_gross_label}<span class="row-note">${finalPeriodText}</span></th><td>${fmt(d.finalMonthGross)}</td></tr>`
     : "";
   const compensationRow = d.compensation77 > 0
-    ? `<tr><th>${tr.compensation77_label}</th><td>${d.compensation77.toFixed(2)}</td></tr>`
+    ? `<tr><th>${tr.compensation77_label}</th><td>${fmt(d.compensation77)}</td></tr>`
     : "";
   const noticePayRow = d.noticePay > 0
-    ? `<tr><th>${tr.notice_pay_label}</th><td>${d.noticePay.toFixed(2)}</td></tr>`
+    ? `<tr><th>${tr.notice_pay_label}</th><td>${fmt(d.noticePay)}</td></tr>`
     : "";
 
   const totalDuesGross = d.reward + d.leaveReward + d.lateGross + d.finalMonthGross + d.compensation77 + d.noticePay;
 
   // ---- Deduction rows ----
   const lateDeductionRow = d.lateInsuranceDeduction > 0
-    ? `<tr><th>${tr.late_insurance_deduction_label}<span class="row-note">(${d.lateMonths} ${lang === "ar" ? "شهر" : "mo"})</span></th><td>${d.lateInsuranceDeduction.toFixed(2)}</td></tr>`
+    ? `<tr><th>${tr.late_insurance_deduction_label}<span class="row-note">(${d.lateMonths} ${lang === "ar" ? "شهر" : "mo"})</span></th><td>${fmt(d.lateInsuranceDeduction)}</td></tr>`
     : "";
   const finalMonthDeductionRow = d.finalMonthInsuranceDeduction > 0
-    ? `<tr><th>${tr.final_month_insurance_deduction_label}<span class="row-note">${finalPeriodText}</span></th><td>${d.finalMonthInsuranceDeduction.toFixed(2)}</td></tr>`
+    ? `<tr><th>${tr.final_month_insurance_deduction_label}<span class="row-note">${finalPeriodText}</span></th><td>${fmt(d.finalMonthInsuranceDeduction)}</td></tr>`
     : "";
 
   const debtDeductionRow = (d.hasDebt && d.debtAmount > 0)
-    ? `<tr><th>${tr.debt_deduction_label}</th><td>${d.debtAmount.toFixed(2)}</td></tr>`
+    ? `<tr><th>${tr.debt_deduction_label}</th><td>${fmt(d.debtAmount)}</td></tr>`
     : "";
 
   const totalDeductions = d.lateInsuranceDeduction + d.finalMonthInsuranceDeduction + (d.hasDebt ? d.debtAmount : 0);
@@ -2399,10 +2398,10 @@ function generateReport(d) {
       <div class="intro-item"><span>${tr.contract_label}</span><b>${contractTypeText}</b></div>
       <div class="intro-item"><span>${tr.article_report_label}</span><b>${d.article === "79m" ? tr.article_79m_word : (tr.article_word + " " + d.article)}</b></div>
       <div class="intro-item"><span>${tr.calc_rule_label}</span><b>${calcRuleText}</b></div>
-      <div class="intro-item"><span>${tr.salary_label}</span><b>${d.rewardWage.toFixed(2)} ${tr.currency}</b></div>
-      <div class="intro-item"><span>${tr.insurance_wage_report_label}</span><b>${d.insuranceWage.toFixed(2)} ${tr.currency}</b></div>
-      <div class="intro-item"><span>${tr.insurance_rate_label}</span><b>${(d.rate * 100).toFixed(2)}%</b></div>
-      <div class="intro-item"><span>${tr.net_salary_label}</span><b>${d.netSalary.toFixed(2)} ${tr.currency}</b></div>
+      <div class="intro-item"><span>${tr.salary_label}</span><b>${fmt(d.rewardWage)} ${tr.currency}</b></div>
+      <div class="intro-item"><span>${tr.insurance_wage_report_label}</span><b>${fmt(d.insuranceWage)} ${tr.currency}</b></div>
+      <div class="intro-item"><span>${tr.insurance_rate_label}</span><b>${(d.rate * 100).toFixed(2)}% <span style="font-weight:600; color:var(--ink-soft);">(${fmt(insuranceDeduction(d.insuranceWage, d.rate))} ${tr.currency})</span></b></div>
+      <div class="intro-item"><span>${tr.net_salary_label}</span><b>${fmt(d.netSalary)} ${tr.currency}</b></div>
       <div class="intro-item"><span>${tr.daily_calc_method_label}</span><b>${d.dailyCalcMethod === "calendar" ? tr.daily_calc_calendar_opt : tr.daily_calc_fixed_opt}</b></div>
       <div class="intro-item"><span>${tr.leave_label}</span><b>${d.leave}</b></div>
       ${lateMonthsItem}
@@ -2415,15 +2414,15 @@ function generateReport(d) {
     <table>
       <tr class="ledger-head"><td colspan="2">${tr.section_dues}</td></tr>
       <tr><th>${tr.reward_label}</th><td>${rewardText}</td></tr>
-      ${d.leaveReward > 0 ? `<tr><th>${tr.leaveReward_label}</th><td>${d.leaveReward.toFixed(2)}</td></tr>` : ""}
-      ${d.lateGross > 0 ? `<tr><th>${tr.late_gross_label}</th><td>${d.lateGross.toFixed(2)}</td></tr>` : ""}
+      ${d.leaveReward > 0 ? `<tr><th>${tr.leaveReward_label}</th><td>${fmt(d.leaveReward)}</td></tr>` : ""}
+      ${d.lateGross > 0 ? `<tr><th>${tr.late_gross_label}</th><td>${fmt(d.lateGross)}</td></tr>` : ""}
       ${finalMonthGrossRow}
       ${compensationRow}
       ${noticePayRow}
-      <tr class="ledger-subtotal"><th>${tr.total_dues_label}</th><td>${totalDuesGross.toFixed(2)} ${tr.currency}</td></tr>
+      <tr class="ledger-subtotal"><th>${tr.total_dues_label}</th><td>${fmt(totalDuesGross)} ${tr.currency}</td></tr>
       <tr class="ledger-head"><td colspan="2">${tr.section_deductions}</td></tr>
       ${deductionsRows}
-      <tr class="ledger-subtotal"><th>${tr.total_deductions_label}</th><td>${totalDeductions.toFixed(2)} ${tr.currency}</td></tr>
+      <tr class="ledger-subtotal"><th>${tr.total_deductions_label}</th><td>${fmt(totalDeductions)} ${tr.currency}</td></tr>
     </table>
 
     ${d.employeeEndedWithoutCauseVia77 ? `<p class="report-77-note">${tr.tiered_via_77_note}</p>` : ""}
@@ -2432,7 +2431,7 @@ function generateReport(d) {
 
     <div class="report-net-box">
       <span>${tr.net_final_label}</span>
-      <strong>${d.total.toFixed(2)} ${tr.currency}</strong>
+      <strong>${fmt(d.total)} ${tr.currency}</strong>
     </div>
 
     ${articleTexts[d.article] ? `
