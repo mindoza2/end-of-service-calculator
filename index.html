@@ -801,17 +801,17 @@
         <div>
           <label id="start_label">تاريخ بداية العمل:</label>
           <div class="date-row">
-            <input type="number" id="start_day" placeholder="اليوم">
-            <input type="number" id="start_month" placeholder="الشهر">
-            <input type="number" id="start_year" placeholder="السنة">
+            <input type="number" id="start_day" placeholder="اليوم" min="1" max="31" maxlength="2" inputmode="numeric">
+            <input type="number" id="start_month" placeholder="الشهر" min="1" max="12" maxlength="2" inputmode="numeric">
+            <input type="number" id="start_year" placeholder="السنة" min="1970" max="2100" maxlength="4" inputmode="numeric">
           </div>
         </div>
         <div>
           <label id="end_label">تاريخ نهاية العمل:</label>
           <div class="date-row">
-            <input type="number" id="end_day" placeholder="اليوم">
-            <input type="number" id="end_month" placeholder="الشهر">
-            <input type="number" id="end_year" placeholder="السنة">
+            <input type="number" id="end_day" placeholder="اليوم" min="1" max="31" maxlength="2" inputmode="numeric">
+            <input type="number" id="end_month" placeholder="الشهر" min="1" max="12" maxlength="2" inputmode="numeric">
+            <input type="number" id="end_year" placeholder="السنة" min="1970" max="2100" maxlength="4" inputmode="numeric">
           </div>
         </div>
       </div>
@@ -838,18 +838,18 @@
           <label id="reason_label">إنهاء علاقة العمل حسب المادة:</label>
           <select id="termination_reason">
             <option value="">اختر المادة</option>
-            <option value="18">المادة 18</option>
-            <option value="53">المادة 53</option>
-            <option value="57">المادة 57</option>
-            <option value="74">المادة 74</option>
-            <option value="75">المادة 75</option>
-            <option value="77">المادة 77</option>
-            <option value="79">المادة 79</option>
-            <option value="79m">المادة 79 مكرر</option>
-            <option value="80">المادة 80</option>
-            <option value="81">المادة 81</option>
-            <option value="85">المادة 85</option>
-            <option value="87">المادة 87</option>
+            <option value="18">المادة 18 — انتقال ملكية المنشأة</option>
+            <option value="53">المادة 53 — فترة التجربة</option>
+            <option value="57">المادة 57 — انتهاء عقد المهمة</option>
+            <option value="74">المادة 74 — الأسباب المشروعة للانتهاء</option>
+            <option value="74r">المادة 74 (3 مكرر) — الاستقالة</option>
+            <option value="75">المادة 75 — الإنهاء بإشعار</option>
+            <option value="77">المادة 77 — الإنهاء دون سبب مشروع</option>
+            <option value="79">المادة 79 — الوفاة أو العجز</option>
+            <option value="79m">المادة 79 مكرر — الاستقالة</option>
+            <option value="80">المادة 80 — الفصل لأسباب مبرَّرة</option>
+            <option value="81">المادة 81 — ترك العمل لإخلال المنشأة</option>
+            <option value="87">المادة 87 — القوة القاهرة أو الزواج أو الوضع</option>
           </select>
         </div>
       </div>
@@ -870,9 +870,9 @@
         <div id="original_contract_end_wrapper" style="display:none;">
           <label id="original_contract_end_label">تاريخ نهاية العقد الأصلي (للعقد محدد المدة):</label>
           <div class="date-row">
-            <input type="number" id="orig_end_day" placeholder="اليوم">
-            <input type="number" id="orig_end_month" placeholder="الشهر">
-            <input type="number" id="orig_end_year" placeholder="السنة">
+            <input type="number" id="orig_end_day" placeholder="اليوم" min="1" max="31" maxlength="2" inputmode="numeric">
+            <input type="number" id="orig_end_month" placeholder="الشهر" min="1" max="12" maxlength="2" inputmode="numeric">
+            <input type="number" id="orig_end_year" placeholder="السنة" min="1970" max="2100" maxlength="4" inputmode="numeric">
           </div>
         </div>
       </div>
@@ -1006,6 +1006,7 @@ let lang = "ar";
 const t = {
   ar: {
     title: "حاسبة نهاية الخدمة",
+    error_year_range: "السنة خارج النطاق المقبول. أدخل سنة بين 1970 و{max}.",
     guide_title: "كيف تُحتسب المكافأة",
     lateTotal_label: "الرواتب المتأخرة (بعد الخصم)",
     debt_deduct_label: "خصم السلفة / العهدة",
@@ -1148,6 +1149,7 @@ const t = {
   },
   en: {
     title: "End of Service Calculator",
+    error_year_range: "Year is outside the accepted range. Enter a year between 1970 and {max}.",
     guide_title: "How the Reward Is Calculated",
     lateTotal_label: "Late Salaries (After Deduction)",
     debt_deduct_label: "Advance / Custody Deduction",
@@ -1363,6 +1365,12 @@ const articleTexts = {
     textEn: "An employment contract terminates in any of the following cases:\n\n1 - Where both parties agree to terminate it, provided the worker's consent is in writing.\n\n2 - Where the term specified in the contract expires, unless the contract has been expressly renewed in accordance with this Law, in which case it continues to its term.\n\n3 - At the will of either party in contracts of unlimited duration, in accordance with Article (75) of this Law.\n\n3 (bis) - Resignation.\n\n4 - The worker reaching retirement age as prescribed by the Social Insurance Law, unless the parties agree to continue working beyond that age.\n\n5 - Force majeure.\n\n6 - Permanent closure of the establishment.\n\n7 - Discontinuation of the activity in which the worker is engaged, unless otherwise agreed.\n\n7 (bis) - Issuance of a final decision or judgment by the competent court terminating the worker's contract in any bankruptcy proceedings commenced under the Bankruptcy Law.\n\n8 - Any other case provided for by another law.",
     text: "ينتهي عقد العمل في أي من الأحوال الآتية:\n\n١ - إذا اتفق الطرفان على إنهائه، بشرط أن تكون موافقة العامل كتابية.\n\n٢ - إذا انتهت المدة المحددة في العقد، ما لم يكن العقد قد تجدد صراحة وفق أحكام هذا النظام؛ فيستمر إلى أجله.\n\n٣ - بناءً على إرادة أحد الطرفين في العقود غير المحددة المدة، وفقاً لما ورد في المادة (٧٥) من هذا النظام.\n\n٣ (مكرر) - الاستقالة.\n\n٤ - بلوغ العامل سن التقاعد وفق ما تقضي به أحكام نظام التأمينات الاجتماعية، ما لم يتفق الطرفان على الاستمرار في العمل بعد هذه السن.\n\n٥ - القوة القاهرة.\n\n٦ - إغلاق المنشأة نهائياً.\n\n٧ - إنهاء النشاط الذي يعمل فيه العامل، ما لم يُتفق على غير ذلك.\n\n٧ (مكرر) - صدور قرار، أو حكم نهائي من المحكمة المختصة؛ بإنهاء عقد العامل في أي من إجراءات الإفلاس المفتتحة وفق نظام الإفلاس.\n\n٨ - أي حالة أخرى ينص عليها نظام آخر."
   },
+  "74r": {
+    title: "المادة الرابعة والسبعون — الفقرة (3 مكرر)",
+    titleEn: "Article 74 — Paragraph 3 (bis)",
+    text: "ينتهي عقد العمل في أي من الأحوال الآتية:\n\n٣ (مكرر) - الاستقالة.\n\nوقد أُضيفت هذه الفقرة بموجب المرسوم الملكي (م/44) وتاريخ 1446/2/8هـ، لتكون الاستقالة سبباً مستقلاً لانتهاء عقد العمل. وتُنظّم إجراءاتها المادة (التاسعة والسبعون مكرر)، ويُحتسب أثرها على المكافأة وفق المادة (الخامسة والثمانين).",
+    textEn: "An employment contract terminates in any of the following cases:\n\n3 (bis) - Resignation.\n\nThis paragraph was added by Royal Decree (M/44) dated 08/02/1446 AH, establishing resignation as an independent ground for terminating the employment contract. Its procedures are governed by Article 79 (bis), and its effect on the end-of-service reward is determined under Article 85.",
+  },
   "75": {
     title: "المادة الخامسة والسبعون",
     titleEn: "Article 75",
@@ -1418,14 +1426,17 @@ const articleRules = {
   "53":  { entitled: false, validParty: "both", validContractType: "both" },      // فترة التجربة - لا مكافأة لأي طرف
   "57":  { entitled: true,  validParty: "both", validContractType: "محدد" },       // عقد المهمة المحددة - محدد المدة فقط
   "74":  { entitled: true,  validParty: "both", validContractType: "both" },       // أسباب مشروعة لانتهاء العقد - مكافأة كاملة
+  // Article 74 paragraph 3-bis lists resignation as an independent ground for
+  // termination. Since the worker is the one ending the relationship, the
+  // Article 85 tiering applies - the same treatment as any other resignation.
+  "74r": { entitled: true,  validParty: "employee", validContractType: "both", tiered: true },
   "75":  { entitled: true,  validParty: "both", validContractType: "غير محدد" },   // إنهاء العقد غير محدد المدة - غير محدد فقط
   "77":  { entitled: true, validParty: "both", validContractType: "both", entitledByParty: { company: true, employee: false } }, // تعويض إنهاء بدون سبب مشروع - يستحقه الطرف المتضرر فقط
   "79":  { entitled: true,  validParty: "both", validContractType: "both" },
   "79m": { entitled: true,  validParty: "employee", validContractType: "محدد" }, // 79 مكرر - آلية قبول الاستقالة، تنطبق حصراً على عقد محدد المدة (تأكيد بمصدرين قانونيين مستقلين). عقد غير محدد المدة له مساره المستقل عبر م.75 (إشعار مباشر، حق مطلق بلا حاجة لـ"قبول"). الأثر المالي: تدرّج م.85 (نفس منطق applyResignationTiering أدناه، لا حاجة لخاصية tieredIfLimited بعد الآن لأن المادة أصلاً محصورة بمحدد المدة).
   "80":  { entitled: false, validParty: "company", validContractType: "both" },    // فصل تأديبي من المنشأة - لا مكافأة
   "81":  { entitled: true,  validParty: "employee", validContractType: "both" },   // ترك العمل لإخلال المنشأة - مكافأة كاملة
-  "85":  { entitled: true,  validParty: "employee", validContractType: "محدد", tiered: true }, // استقالة - محدد المدة فقط، مكافأة متدرجة
-  "87":  { entitled: true,  validParty: "employee", validContractType: "محدد" }    // استثناء 85: قوة قاهرة أو زواج/وضع - محدد المدة فقط
+  "87":  { entitled: true,  validParty: "employee", validContractType: "both" }    // استثناء 85: قوة قاهرة أو زواج/وضع - يسري على العقدين، إذ لم يقيّد نص المادة نطاقه بنوع عقد
 };
 
 // Resignation reward tiers under Article 85, based on completed years of service
@@ -1662,7 +1673,7 @@ function updateGuidePanel() {
     if (rule && rule.entitled === false) {
       mode = "none";
     } else if (
-      article === "85" || article === "79m" ||
+      article === "74r" || article === "79m" ||
       ((article === "75" || article === "77") && party === "employee")
     ) {
       mode = "85";
@@ -1701,6 +1712,34 @@ function updateGuidePanel() {
   document.getElementById(id).addEventListener('change', updateGuidePanel);
 });
 updateGuidePanel();
+
+// Date-field ergonomics: cap each box at its natural width (2 digits for day
+// and month, 4 for year) and advance focus once a box is full, so a date can
+// be typed straight through without reaching for Tab. Values still go through
+// the same validation on Calculate - this only shapes the typing experience.
+(function () {
+  const chains = [
+    ['start_day', 'start_month', 'start_year'],
+    ['end_day', 'end_month', 'end_year'],
+    ['orig_end_day', 'orig_end_month', 'orig_end_year'],
+  ];
+  const widthOf = id => id.endsWith('_year') ? 4 : 2;
+
+  chains.forEach(chain => {
+    chain.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const w = widthOf(id);
+      el.addEventListener('input', () => {
+        if (el.value.length > w) el.value = el.value.slice(0, w);
+        if (el.value.length === w && i < chain.length - 1) {
+          const next = document.getElementById(chain[i + 1]);
+          if (next) { next.focus(); next.select(); }
+        }
+      });
+    });
+  });
+})();
 
 // Toggle between the two salary-entry modes: GOSI-app figures (recommended -
 // two aggregate numbers already correctly split by the official system) vs
@@ -1968,6 +2007,17 @@ function calculate() {
 
   if (!isValidDate(sy, sm, sd) || !isValidDate(ey, em, ed)) {
     showError(tr.error_invalid_date);
+    return;
+  }
+
+  // Plausibility window for years. A mistyped year (202 for 2020, or 2202 for
+  // 2022) otherwise sails through as a valid date and produces a service
+  // period of centuries with a matching reward figure, silently. The window
+  // runs from 1970 to five years ahead, which covers fixed-term contracts
+  // whose end date is already known and in the future.
+  const yearMax = new Date().getFullYear() + 5;
+  if (sy < 1970 || sy > yearMax || ey < 1970 || ey > yearMax) {
+    showError(tr.error_year_range.replace("{max}", yearMax));
     return;
   }
 
@@ -2307,7 +2357,7 @@ function generateReport(d) {
   if (ruleRes && ruleRes.entitled === false) {
     calcRuleText = tr.calc_rule_none;
   } else if (
-    d.article === "85" || d.article === "79m" ||
+    d.article === "74r" || d.article === "79m" ||
     ((d.article === "75" || d.article === "77") && d.party === "employee")
   ) {
     calcRuleText = tr.calc_rule_85;
