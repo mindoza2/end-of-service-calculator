@@ -365,7 +365,6 @@
               <div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;">
                 <span style="position:relative;display:inline-block;font-family:'Reem Kufi',sans-serif;font-weight:600;font-size:32px;color:#ffffff;line-height:1.1;">حسبة<span aria-hidden="true" style="position:absolute;top:96%;inset-inline-end:78%;width:15px;height:5px;transform:translate(50%,-50%) rotate(-14deg);background:var(--accent);border-radius:99px;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span style="font-family:'Noto Sans Old North Arabian',serif;font-size:4px;color:var(--deep);line-height:1;">&#x10A82;</span><span style="font-family:'Noto Sans Old North Arabian',serif;font-size:4px;color:var(--deep);line-height:1;">&#x10A8A;</span><span style="font-family:'Noto Sans Old North Arabian',serif;font-size:4px;color:var(--deep);line-height:1;">&#x10A88;</span><span style="font-family:'Noto Sans Old North Arabian',serif;font-size:4px;color:var(--deep);line-height:1;">&#x10A89;</span></span></span>
               </div>
-              <span id="tEyebrow" style="display:block;font-size:14px;font-weight:500;letter-spacing:1.4px;color:var(--muted);margin-top:5px;"></span>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:9px;">
@@ -658,7 +657,7 @@ var state = {
 };
 
 var L = {
-  ar:{ title:"حاسبة نهاية الخدمة", eyebrow:"نظام العمل السعودي",
+  ar:{ title:"حاسبة نهاية الخدمة",
     print:"طباعة التقرير", viewReport:"عرض التقرير", langSwitch:"English", currency:"ر.س",
     secEmployee:"الموظف والراتب", secDuration:"مدة الخدمة", secTermination:"الإنهاء والعقد",
     secExtras:"مستحقات ومستقطعات", sec77:"تعويض المادة 77", ledger:"تفصيل الحساب",
@@ -724,7 +723,7 @@ var L = {
     basisNoneText:"نصّت المادة المختارة صراحةً على عدم استحقاق المكافأة في هذه الحالة.",
     basisNone53Text:"نصّت المادة 54: «وإذا أنهي العقد خلال فترة التجربة فإن أيًّا من الطرفين لا يستحق تعويضاً، كما لا يستحق العامل مكافأة نهاية الخدمة عن ذلك».",
     rights:"هذا التقرير احتساب تقديري وفق المدخلات المدرجة أعلاه، ولا يُغني عن استشارة نظامية أو عن تسوية رسمية من المنشأة." },
-  en:{ title:"End of Service Calculator", eyebrow:"Saudi Labor Law",
+  en:{ title:"End of Service Calculator",
     print:"Print report", viewReport:"View report", langSwitch:"عربي", currency:"SAR",
     secEmployee:"Employee & wage", secDuration:"Service period", secTermination:"Termination & contract",
     secExtras:"Dues & deductions", sec77:"Article 77 compensation", ledger:"Breakdown",
@@ -1298,7 +1297,6 @@ function render(){
   document.documentElement.setAttribute("dir", ar?"rtl":"ltr");
   document.documentElement.setAttribute("lang", ar?"ar":"en");
 
-  text("tEyebrow", La.title+" · "+La.eyebrow);
   // The tab title follows the language; the name حسبة stays as it is in both
   document.title = "حسبة — " + La.title;
   text("tViewReport", La.viewReport);
